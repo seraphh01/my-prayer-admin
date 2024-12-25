@@ -1,0 +1,26 @@
+<!-- src/app/pages/auth/login.component.html -->
+
+<div class="container">
+    <div class="login-container">
+        <h2>Login</h2>
+
+        <div *ngIf="errorMsg" style="color:red;">
+            {{ errorMsg }}
+        </div>
+          
+          <form (ngSubmit)="onLogin()" class="form-container">
+            <div class="input-container">
+              <label>Email:</label>
+              <input [(ngModel)]="email" name="email" type="email" />
+            </div>
+            <div class="input-container">`
+              <label>Password:</label>
+              <input [(ngModel)]="password" name="password" type="password" />
+            </div>
+            <button type="submit">Login</button>
+          </form>
+    </div>
+
+      
+</div>
+

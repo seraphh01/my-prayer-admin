@@ -1,0 +1,20 @@
+<h2>Tipuri de rugăciuni</h2>
+
+<div style="margin-bottom: 1rem;">
+  <input
+    type="text"
+    [(ngModel)]="newRootTypeName"
+    placeholder="Nou tip de rugăciune"
+  />
+  <button (click)="addRootType()">Adaugă</button>
+</div>
+
+<ul>
+  <li *ngFor="let root of prayerTypes">
+    <!-- Delegate the display/edit logic to the child component -->
+    <app-prayer-type-subitem
+      [node]="root"
+      (refreshNeeded)="onRefreshNeeded()"
+    ></app-prayer-type-subitem>
+  </li>
+</ul>

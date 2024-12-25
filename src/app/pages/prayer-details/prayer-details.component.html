@@ -1,0 +1,17 @@
+<div *ngIf="prayer">
+    <h2>{{ prayer.title }}</h2>
+  
+    <p>
+      Subtitle:
+      <input [(ngModel)]="prayer.subtitle" />
+    </p>
+  
+    <p>
+      Sequence:
+      <input [(ngModel)]="prayer.sequence" type="number" />
+    </p>
+  
+    <button (click)="updatePrayer()">Save Changes</button>
+    <button (click)="deletePrayer()">Delete Prayer</button>
+  </div>
+  

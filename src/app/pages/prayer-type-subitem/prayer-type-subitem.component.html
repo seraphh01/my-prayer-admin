@@ -1,0 +1,23 @@
+<ng-container *ngIf="!isEditing; else editMode">
+    {{ node.type }}
+    <button (click)="enableEdit()">Edit</button>
+    <button (click)="addSubtype()">Add Subtype</button>
+    <button (click)="deleteType()">Delete</button>
+  </ng-container>
+  
+  <ng-template #editMode>
+    <input [(ngModel)]="tempName" />
+    <button (click)="saveEdit()">Save</button>
+    <button (click)="cancelEdit()">Cancel</button>
+  </ng-template>
+  
+  <!-- Recursively render subtypes, if any -->
+  <ul *ngIf="node.subtypes?.length">
+    <li *ngFor="let child of node.subtypes">
+      <app-prayer-type-subitem
+        [node]="child"
+        (refreshNeeded)="onChildRefreshNeeded()"
+      ></app-prayer-type-subitem>
+    </li>
+  </ul>
+  

@@ -1,0 +1,6 @@
+<h2>Toate Rugăciunile</h2>
+<ul>
+  <li *ngFor="let prayer of prayers">
+    <a [routerLink]="['/prayers', prayer.id]">{{ prayer.title }}</a>
+  </li>
+</ul>
