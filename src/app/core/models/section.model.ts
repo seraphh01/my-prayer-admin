@@ -1,3 +1,5 @@
+import { SectionText } from "./section-text.model";
+
 export interface Section {
     id: string;             // uuid
     created_at: string;     // timestamp with time zone
@@ -6,5 +8,6 @@ export interface Section {
     subtitle: string | null;
     duration: number;
     image_url: string | null;
+    texts: SectionText[] | null;
   }
   

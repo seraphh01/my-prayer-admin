@@ -1,0 +1,18 @@
+<h2>Texte liturgice</h2>
+
+<div style="margin-bottom: 1rem;">
+    <input
+      type="text"
+      [(ngModel)]="newLiturgicalTextName"
+      placeholder="Text liturgic nou"
+    />
+    <button (click)="addLitirgucalText()">Adaugă</button>
+  </div>
+
+<ul>
+  <li *ngFor="let lt of liturgicalTexts">
+    <a [routerLink]="['/liturgicalTexts', lt.id]">
+      {{ lt.title }}
+    </a>
+  </li>
+</ul>

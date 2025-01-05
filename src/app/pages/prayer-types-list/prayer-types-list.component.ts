@@ -27,7 +27,7 @@ export class PrayerTypesListComponent implements OnInit {
 
   async loadData(): Promise<void> {
     try {
-      this.prayerTypes = await this.prayerTypeService.getAll();
+      this.prayerTypes = await this.prayerTypeService.getTree();
     } catch (error) {
       console.error('Error loading prayer types:', error);
     }

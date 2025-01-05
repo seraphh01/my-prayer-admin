@@ -14,8 +14,20 @@ export class PrayerTypeService extends SupabaseTableService<PrayerType> {
     super(supabase);
   }
 
-
+  /**
+   * Fetch all rows from the table.
+   * @returns Promise<T[]>
+   */
   override async getAll(): Promise<PrayerType[]> {
+    const { data, error } = await this.client
+      .from(this.tableName)
+      .select('*')
+
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async getTree(): Promise<PrayerType[]> {
     const { data, error } = await this.supabase.client
       .rpc('get_prayer_types'); // Name of your function in DB
 

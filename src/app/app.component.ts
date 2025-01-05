@@ -10,9 +10,15 @@ import { AuthService } from './core/services/auth.service';
   template: `
   <ng-container *ngIf="auth.isLoggedIn()">
   <nav>
+      <a style="display: inline; color: black">CONGREGAȚIA SURORILOR MAICII DOMNULUI - PANOU ADMINISTRARE</a>
       <a routerLink="/prayers">Toate Rugăciunile</a>
       <a routerLink="/prayerTypes">Tipuri de Rugăciuni</a>
-      <button (click)="onLogout()" style="float: right;">Delogare</button>
+      <a routerLink="/sections">Secțiuni</a>
+      <a routerLink="/liturgicalTexts">Texte</a>
+      <div style="display: flex; float:right; width: min-content; gap: 1rem">
+        <span >{{auth.user?.email}}</span>
+        <button (click)="onLogout()">Delogare</button>
+      </div>
     </nav>
     <hr />
   </ng-container>

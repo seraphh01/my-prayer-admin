@@ -1,0 +1,22 @@
+<!-- src/app/pages/sections-list/sections-list.component.html -->
+<h2>Secțiuni</h2>
+
+<p>
+  <label for="newSectionTitle">Adăugați titlul unei secțiuni noi:</label>
+  <input
+    id="newSectionTitle"
+    [(ngModel)]="newSectionTitle"
+  />
+  <button (click)="addSection()">
+    <i class="fa fa-plus"></i> <!-- Example FontAwesome icon -->
+    Adăugați
+  </button>
+</p>
+
+<ul>
+    <li *ngFor="let sec of sections">
+        <a [routerLink]="['/sections', sec.id]">
+            <i class="fa fa-edit"></i> {{ sec.title }}
+        </a>
+    </li>
+</ul>

@@ -5,6 +5,5 @@ export interface PrayerType {
     parent_type_id: number | null;
     subtypes: PrayerType[] | null;
     isEditing: boolean | null;
-    tempTypeName: string | null;
   }
   

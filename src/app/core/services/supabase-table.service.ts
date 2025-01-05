@@ -51,6 +51,7 @@ export abstract class SupabaseTableService<T extends { id: string | number }> {
     const { data, error } = await this.client
       .from(this.tableName)
       .insert([item])
+      .select()
       .single();
 
     if (error) throw error;
@@ -68,6 +69,7 @@ export abstract class SupabaseTableService<T extends { id: string | number }> {
       .from(this.tableName)
       .update(item)
       .eq('id', id)
+      .select()
       .single();
 
     if (error) throw error;

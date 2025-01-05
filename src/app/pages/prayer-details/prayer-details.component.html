@@ -1,17 +1,99 @@
 <div *ngIf="prayer">
-    <h2>{{ prayer.title }}</h2>
+  <div>
+    <h2>
+      <button (click)="goBack()"><i class="material-icons" style="font-size: 16px">arrow_back</i></button>{{ prayer.title }} 
+      <button (click)="deletePrayer()"><i class="material-icons" style="font-size:16px">delete</i></button></h2>
   
+    
+        <h3>Detalii rugăciune</h3>
+      <p>
+        Titlu:
+        <input [(ngModel)]="prayer.title" />
+      </p>
+
     <p>
-      Subtitle:
+      Subtitlu:
       <input [(ngModel)]="prayer.subtitle" />
     </p>
   
     <p>
-      Sequence:
+      Ordine:
       <input [(ngModel)]="prayer.sequence" type="number" />
     </p>
+
+    <p>
+      Tip:
+      <select [(ngModel)]="prayer.prayer_type_id">
+        <option *ngFor="let type of prayerTypes" [value]="type.id">{{ type.type }}</option>
+      </select>
+      </p>
   
-    <button (click)="updatePrayer()">Save Changes</button>
-    <button (click)="deletePrayer()">Delete Prayer</button>
+    <button (click)="updatePrayer()">Salvează</button>
+  </div>
+
+    <hr>
+
+    <div>
+
+      <h3>Secțiuni</h3>
+      <p *ngIf="!prayer?.sections?.length">Nu sunt secțiuni adăugate</p>
+      <ul>
+        <li *ngFor="let prayerSection of prayer?.sections; let i = index">
+          <p>
+            <a  href="/sections/{{prayerSection.section?.id}}">{{ prayerSection.section?.title }} {{ prayerSection.section?.subtitle?.length ? '-' + prayerSection.section?.subtitle : ''}}</a>
+            
+            <button (click)="deleteSection(prayerSection.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
+            <button (click)="displayNewSubsectionForm(prayerSection.id)"><i class="material-icons" style="font-size: 12px">add</i></button>
+          </p>
+          <ul>
+            <li *ngFor="let childSection of prayerSection.subsections">
+              <p>
+                {{ childSection.section?.title }} - {{ childSection.section?.subtitle }}
+                <button (click)="deleteSection( childSection.id, prayerSection.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
+              </p>
+            </li>
+            <li *ngIf="newPrayerSection?.parent_id === prayerSection.id">
+              <select [(ngModel)]="newPrayerSection!.section_id">
+                <option >-- Alegeți --</option>
+                <option *ngFor="let section of sections" [value]="section.id">{{ section.title }}</option>
+              </select>
+              <button (click)="addPrayerSection(prayerSection.id)"><i class="material-icons" style="font-size: 12px">save</i></button>
+              <button (click)="hideNewSubsectionForm()"><i class="material-icons" style="font-size: 12px">delete</i></button>
+            </li>
+          </ul>
+        </li>
+      </ul>
+
+      <h4>Adaugă o secțiune nouă</h4>
+      <select [(ngModel)]="newPrayerSection!.section_id">
+        <option value="">-- Alegeți --</option>
+        <option *ngFor="let section of sections" [value]="section.id">{{ section.title }}</option>
+      </select>
+      <button (click)="addPrayerSection()">Adaugă</button>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Grupe de dată</h3>
+      <p *ngIf="!prayer?.date_groups?.length">Nu sunt grupe de dată adăugate</p>
+      <ul>
+        <li *ngFor="let prayerDateGroup of prayer?.date_groups; let i = index">
+          <p>
+            {{ prayerDateGroup.date_group?.date_group_type?.name }} - {{ prayerDateGroup.date_group?.title }}
+            <button (click)="deletePrayerDateGroup(prayerDateGroup.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
+          </p>
+        </li>
+      </ul>
+      <h4>Adaugă o nouă grupă de dată</h4>
+      <label for="date_group">Grupă de dată: </label>
+      <select [(ngModel)]="newPrayerDateGroup!.date_group_id" id="date_group">
+        <option value="0">-- Alegeți --</option>
+        <option *ngFor="let dateGroup of dateGroups" [value]="dateGroup.id">{{dateGroup.date_group_type?.name}} - {{ dateGroup.title }}</option>
+      </select>
+      <br>
+      
+      <button (click)="addPrayerDateGroup()">Adaugă</button>
+    </div>
   </div>
   

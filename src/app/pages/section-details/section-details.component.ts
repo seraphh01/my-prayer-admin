@@ -1,0 +1,225 @@
+// src/app/pages/section-detail/section-detail.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { LiturgicalText } from '../../core/models/liturgical-text.model';
+import { SectionText } from '../../core/models/section-text.model';
+import { Section } from '../../core/models/section.model';
+import { LiturgicalTextsService } from '../../core/services/liturgical-text.service';
+import { SectionTextsService } from '../../core/services/section-texts.service';
+import { SectionsService } from '../../core/services/sections.service';
+
+
+@Component({
+  standalone: true,
+  selector: 'app-section-detail',
+  templateUrl: './section-details.component.html',
+  styleUrls: ['./section-details.component.css'],
+  imports: [CommonModule, FormsModule, RouterLink],
+})
+export class SectionDetailsComponent implements OnInit {
+  sectionId!: string;
+  section: Section | null = null;
+  sectionTexts: SectionText[] = []; // For the many-to-many relationship
+
+  allLitTexts: LiturgicalText[] = []; // Loaded for adding new texts
+
+  // Editable fields for the section
+  editedTitle = '';
+  editedSubtitle = '';
+  editedAudioUrl = '';
+  editedDuration: number | null = null;
+  editedImageUrl = '';
+
+  // For adding a new text
+  selectedLitTextId = '';
+  newStartTime: number | null = 0;
+  newEndTime: number | null = 0;
+  newRepetitions = 1;
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private sectionsService: SectionsService,
+    private sectionTextsService: SectionTextsService,
+    private litTextsService: LiturgicalTextsService
+  ) {}
+
+  async ngOnInit(): Promise<void> {
+    this.sectionId = this.route.snapshot.paramMap.get('id') || '';
+    await this.loadSection();
+    await this.loadAllLitTexts();
+    await this.loadSectionTexts();
+  }
+
+  /**
+   * Fetch the Section by ID. Once loaded, populate the local editing fields.
+   */
+  async loadSection() {
+    this.section = await this.sectionsService.getById(this.sectionId);
+    if (this.section) {
+      this.editedTitle = this.section.title || '';
+      this.editedSubtitle = this.section.subtitle || '';
+      this.editedAudioUrl = this.section.audio_url;
+      this.editedDuration = this.section.duration;
+      this.editedImageUrl = this.section.image_url || '';
+    }
+  }
+
+  /**
+   * Load all liturgical texts for the dropdown
+   */
+  async loadAllLitTexts() {
+    this.allLitTexts = await this.litTextsService.getAll();
+  }
+
+  /**
+   * Load section_texts for the current section
+   */
+  async loadSectionTexts() {
+    // Example direct query to the supabase client
+    const { data, error } = await this.sectionTextsService.client
+      .from('section_texts')
+      .select('*, text: liturgical_texts(*)') // Include the liturgical_text
+      .eq('prayer_section_id', this.sectionId) // or "section_id"
+      .order('sequence', { ascending: true });
+
+    if (!error && data) {
+      this.sectionTexts = data;
+    }
+  }
+
+  /**
+   * Save all edited fields in a single request
+   */
+  async saveSection() {
+    if (!this.section) return;
+
+    // Gather all changed fields
+    const updateData: Partial<Section> = {
+      title: this.editedTitle.trim() || null,
+      subtitle: this.editedSubtitle.trim() || null,
+      audio_url: this.editedAudioUrl.trim(),
+      duration: this.editedDuration || 0,
+      image_url: this.editedImageUrl.trim() || null,
+    };
+
+    try {
+      const updated = await this.sectionsService.update(this.section.id, updateData);
+      if (updated) {
+        // Update local data to reflect changes
+        this.section.title = updated.title;
+        this.section.subtitle = updated.subtitle;
+        this.section.audio_url = updated.audio_url;
+        this.section.duration = updated.duration;
+        this.section.image_url = updated.image_url;
+
+        alert('Secțiune salvată cu succes!');
+      }
+    } catch (error) {
+      console.error('Eroare la salvarea secțiunii:', error);
+    }
+  }
+
+  /**
+   * Add a new text to this section with max(sequence) + 1
+   */
+  async addLiturgicalTextToSection() {
+    if (!this.selectedLitTextId) return;
+
+    let maxSeq = 0;
+    if (this.sectionTexts.length > 0) {
+      maxSeq = Math.max(...this.sectionTexts.map((st) => st.sequence));
+    }
+
+    try {
+      await this.sectionTextsService.create({
+        prayer_section_id: this.sectionId,
+        liturgical_text_id: this.selectedLitTextId,
+        sequence: maxSeq + 1,
+        repetition: this.newRepetitions,
+        start_time: this.newStartTime ?? null,
+        end_time: this.newEndTime ?? null,
+      } as Partial<SectionText>);
+
+      // Reset form fields
+      this.selectedLitTextId = '';
+      this.newStartTime = null;
+      this.newEndTime = null;
+      this.newRepetitions = 1;
+
+      // Reload
+      await this.loadSectionTexts();
+    } catch (error) {
+      console.error('Eroare la adăugarea textului:', error);
+    }
+  }
+
+  /**
+   * Delete a text from the join table
+   */
+  async deleteSectionText(st: SectionText, index: number) {
+    if (!confirm('Șterge acest text din secțiune?')) return;
+    try {
+      await this.sectionTextsService.delete(st.id);
+      this.sectionTexts.splice(index, 1);
+    } catch (error) {
+      console.error('Eroare la ștergere:', error);
+    }
+  }
+
+  /**
+   * Reorder up
+   */
+  async moveUp(index: number) {
+    if (index === 0) return;
+    const current = this.sectionTexts[index];
+    const prev = this.sectionTexts[index - 1];
+
+    const tempSeq = current.sequence;
+    current.sequence = prev.sequence;
+    prev.sequence = tempSeq;
+
+    try {
+      await this.sectionTextsService.update(current.id, { sequence: current.sequence });
+      await this.sectionTextsService.update(prev.id, { sequence: prev.sequence });
+      // Swap in array
+      this.sectionTexts[index] = prev;
+      this.sectionTexts[index - 1] = current;
+    } catch (error) {
+      console.error('Eroare la mutare în sus:', error);
+    }
+  }
+
+  /**
+   * Reorder down
+   */
+  async moveDown(index: number) {
+    if (index === this.sectionTexts.length - 1) return;
+    const current = this.sectionTexts[index];
+    const next = this.sectionTexts[index + 1];
+
+    const tempSeq = current.sequence;
+    current.sequence = next.sequence;
+    next.sequence = tempSeq;
+
+    try {
+      await this.sectionTextsService.update(current.id, { sequence: current.sequence });
+      await this.sectionTextsService.update(next.id, { sequence: next.sequence });
+      // Swap in array
+      this.sectionTexts[index] = next;
+      this.sectionTexts[index + 1] = current;
+    } catch (error) {
+      console.error('Eroare la mutare în jos:', error);
+    }
+  }
+
+  /**
+   * Go back to the sections list
+   */
+  goBack() {
+    window.history.back();
+  }
+}

@@ -1,0 +1,131 @@
+<!-- src/app/pages/section-detail/section-detail.component.html -->
+
+<!-- Back button -->
+
+  
+  <div *ngIf="section">
+    <h2> 
+        <button (click)="goBack()">
+        <i class="material-icons" style="font-size:16px" title="Înapoi">arrow_back</i>
+      </button>{{ section.title }}  {{ section.subtitle !== null ? ' - ' + section.subtitle : '' }}
+    </h2>
+  
+    <div style="display: flex; justify-content: space-between;">
+        <div>
+            <table class="section-edit-fields" style="border-collapse: collapse; ">
+                <tr>
+                  <td><label>Titlu:</label></td>
+                  <td><input [(ngModel)]="editedTitle" /></td>
+                </tr>
+                <tr>
+                  <td><label>Subtitlu:</label></td>
+                  <td><input [(ngModel)]="editedSubtitle" /></td>
+                </tr>
+                <tr>
+                  <td><label>Audio URL:</label></td>
+                  <td><input [(ngModel)]="editedAudioUrl" /></td>
+                </tr>
+                <tr>
+                  <td><label>Durată (secunde):</label></td>
+                  <td><input [(ngModel)]="editedDuration" type="number" /></td>
+                </tr>
+                <tr>
+                  <td><label>URL Imagine:</label></td>
+                  <td><input [(ngModel)]="editedImageUrl" /></td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="text-align: left;">
+                  <button (click)="saveSection()">
+                    <i class="fa fa-save"></i> Salvează
+                  </button>
+                  </td>
+                </tr>
+              </table>
+                      <!-- audio player for the audio url of the section-->
+        <audio *ngIf="section.audio_url" controls>
+            <source [src]="section.audio_url" type="audio/mpeg" />
+            Your browser does not support the audio element.</audio>
+        </div>
+
+      <img *ngIf="section.image_url" [src]="section.image_url" alt="Section Image" style="margin-left: 20px; max-width: 200px; max-height: 200px;">
+
+    </div>
+  
+    <hr />
+  
+    <!-- Existing assigned texts in the section -->
+    <h3>Texte în secțiune</h3>
+  
+    <table style="border-collapse: collapse; margin-top: 20px;">
+      <tr>
+        <th style="padding: 8px;">#</th>
+        <th style="padding: 8px;">Text</th>
+        <th style="padding: 8px;">Acțiuni</th>
+        <th style="padding: 8px;">Interval</th>
+      </tr>
+      <tr *ngFor="let st of sectionTexts; let i = index" [ngStyle]="{'background-color': i % 2 === 0 ? '#f2f2f2' : 'white'}">
+        <td style="padding: 8px;">{{ i + 1 }}</td>
+        <td>
+            <span *ngIf="allLitTexts && allLitTexts.length">
+                {{ st?.repetition! > 1 ? st.repetition + ' x' : ''}}
+                <a [routerLink]="['/liturgicalTexts', st.liturgical_text_id]">
+                  {{ st?.text?.title ?? 'N/A' }}
+                </a>
+              </span>
+        </td>
+
+          
+        <td style="padding: 8px;">
+          <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
+          <button (click)="moveDown(i)" [disabled]="i === sectionTexts.length - 1" title="Mută în jos">↓</button>
+          <button (click)="deleteSectionText(st, i)">
+            <i class="material-icons" style="font-size:12px" title="Șterge">delete</i>
+          </button>
+        </td>
+        <td style="padding: 8px; ">
+          {{ st.start_time }} → {{ st.end_time }}
+        </td>
+      </tr>
+    </table>
+  
+    <hr />
+  
+    <!-- Add new text to this section -->
+    <h3>Adăugați un text nou în secțiune</h3>
+    <table style="border-collapse: collapse;">
+      <tr>
+        <td><label for="litTextSelect">Selectați un text liturgic:</label></td>
+        <td>
+          <select id="litTextSelect" [(ngModel)]="selectedLitTextId">
+            <option value="">-- Alegeți --</option>
+            <option *ngFor="let lt of allLitTexts" [value]="lt.id">
+              {{ lt.title }}
+            </option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td><label for="startTime">Start Time:</label></td>
+        <td>
+          <input id="startTime" type="number" [(ngModel)]="newStartTime" placeholder="Ex: 0" />
+        </td>
+      </tr>
+      <tr>
+        <td><label for="endTime">End Time:</label></td>
+        <td>
+          <input id="endTime" type="number" [(ngModel)]="newEndTime" placeholder="Ex: 20" />
+        </td>
+      </tr>
+      <tr>
+        <td><label for="repetitions">Repetări:</label></td>
+        <td>
+          <input id="repetitions" type="number" [(ngModel)]="newRepetitions" placeholder="Ex: 1" />
+        </td>
+      </tr>
+    </table>
+  
+    <button (click)="addLiturgicalTextToSection()">
+      <i class="fa fa-plus"></i> Adăugați
+    </button>
+  </div>
+  

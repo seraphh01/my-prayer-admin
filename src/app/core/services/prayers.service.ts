@@ -14,7 +14,6 @@ export class PrayersService extends SupabaseTableService<Prayer> {
     super(supabase);
   }
 
-
   override async getAll(): Promise<Prayer[]> {
     const { data, error } = await this.client
       .from(this.tableName)
@@ -23,6 +22,24 @@ export class PrayersService extends SupabaseTableService<Prayer> {
 
     if (error) throw error;
     return data ?? [];
+  }
+
+  override async getById(id: string | number): Promise<Prayer | null> {
+    const { data, error } = await this.client
+      .from(this.tableName)
+      .select('*, sections: prayers_sections(*, section: sections(*)), date_groups: prayer_date_group(*, date_group(*))')
+      .order('sequence', { foreignTable: 'prayers_sections' })
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getParyerWithSectionsRecursively(request_prayer_id: string | number): Promise<Prayer | null> {
+    const { data, error } = await this.client.rpc('get_prayer_with_sections_recursive', { request_prayer_id });
+    if (error) throw error;
+    return data;
   }
 
   // If needed, override or add custom methods here.

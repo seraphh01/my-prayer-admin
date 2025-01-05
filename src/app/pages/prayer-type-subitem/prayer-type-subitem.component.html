@@ -1,14 +1,14 @@
 <ng-container *ngIf="!isEditing; else editMode">
     {{ node.type }}
-    <button (click)="enableEdit()">Edit</button>
-    <button (click)="addSubtype()">Add Subtype</button>
-    <button (click)="deleteType()">Delete</button>
+    <button (click)="enableEdit()"><i class="material-icons" style="font-size: 14px">edit</i></button>
+    <button (click)="addSubtype()"><i class="material-icons" style="font-size: 14px">add</i></button>
+    <button (click)="deleteType()"><i class="material-icons" style="font-size: 14px">delete</i></button>
   </ng-container>
   
   <ng-template #editMode>
     <input [(ngModel)]="tempName" />
-    <button (click)="saveEdit()">Save</button>
-    <button (click)="cancelEdit()">Cancel</button>
+    <button (click)="saveEdit()"><i class="material-icons" style="font-size: 14px">save</i></button>
+    <button (click)="cancelEdit()"><i class="material-icons" style="font-size: 14px">cancel</i></button>
   </ng-template>
   
   <!-- Recursively render subtypes, if any -->
