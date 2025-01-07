@@ -67,7 +67,7 @@
       <h4>Adaugă o secțiune nouă</h4>
       <select [(ngModel)]="newPrayerSection!.section_id">
         <option value="">-- Alegeți --</option>
-        <option *ngFor="let section of sections" [value]="section.id">{{ section.title }}</option>
+        <option *ngFor="let section of sections" [value]="section.id">{{ section.title}} {{ section.subtitle?.length ? '- ' + section.subtitle : ''}}</option>
       </select>
       <button (click)="addPrayerSection()">Adaugă</button>
     </div>

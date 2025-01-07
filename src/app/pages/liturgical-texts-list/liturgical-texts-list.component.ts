@@ -28,12 +28,11 @@ export class LiturgicalTextsListComponent implements OnInit {
   }
 
   async addLitirgucalText(): Promise<void> {
-    const title = this.newLiturgicalTextName.trim();
-    if (!title) return;
+    const title = this.newLiturgicalTextName.trim() ?? null;
 
     try {
       let result = await this.litTextService.create({
-        title: title,
+        title: title.length > 0 ? title : undefined,
       });
       this.newLiturgicalTextName = '';
       this.liturgicalTexts.splice(0, 0, result);

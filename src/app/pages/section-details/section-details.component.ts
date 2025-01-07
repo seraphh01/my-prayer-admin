@@ -68,6 +68,17 @@ export class SectionDetailsComponent implements OnInit {
     }
   }
 
+  async deleteSection() {
+    if (!confirm('Șterge această secțiune?')) return;
+    try {
+      await this.sectionsService.delete(this.sectionId);
+      alert('Secțiune ștearsă cu succes!');
+      this.router.navigate(['/sections']);
+    } catch (error) {
+      console.error('Eroare la ștergere:', error);
+    }
+  }
+
   /**
    * Load all liturgical texts for the dropdown
    */

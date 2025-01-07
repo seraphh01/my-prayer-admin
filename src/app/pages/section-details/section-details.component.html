@@ -8,6 +8,7 @@
         <button (click)="goBack()">
         <i class="material-icons" style="font-size:16px" title="Înapoi">arrow_back</i>
       </button>{{ section.title }}  {{ section.subtitle !== null ? ' - ' + section.subtitle : '' }}
+      <button (click)="deleteSection()"><i class="material-icons" style="font-size:16px" title="Șterge">delete</i></button>
     </h2>
   
     <div style="display: flex; justify-content: space-between;">
@@ -69,7 +70,7 @@
             <span *ngIf="allLitTexts && allLitTexts.length">
                 {{ st?.repetition! > 1 ? st.repetition + ' x' : ''}}
                 <a [routerLink]="['/liturgicalTexts', st.liturgical_text_id]">
-                  {{ st?.text?.title ?? 'N/A' }}
+                  {{ st?.text?.title?.length ? st?.text?.title : 'Fără Titlu' }}
                 </a>
               </span>
         </td>

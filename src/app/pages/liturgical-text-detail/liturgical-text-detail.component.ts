@@ -42,12 +42,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
    */
   async loadLiturgicalText() {
     this.text = await this.litTextService.getById(this.textId);
-    if (this.text) {
-      this.editedTitle = this.text.title;
-      // If `texts` aren’t automatically loaded, load them via loadTextElements().
-      // For example, if your backend doesn't join them automatically:
-      await this.loadTextElements();
-    }
+    this.newTextElement!.start_time = this.text?.texts?.length ? this.text.texts[this.text.texts.length - 1].end_time : 0;
   }
 
   /**
@@ -71,10 +66,10 @@ export class LiturgicalTextDetailComponent implements OnInit {
    * Update the litText's title in DB.
    */
   async saveTitle() {
-    if (!this.text?.title) return;
+    if(!this.text) return;
     try {
       const updated = await this.litTextService.update(this.text.id, {
-        title: this.text.title,
+        title: this.text.title ?? null,
         audio_time: this.text.audio_time,
       });
       if (updated) {
@@ -107,7 +102,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
         start_time: this.newTextElement?.start_time,
         end_time: this.newTextElement?.end_time,
       });
-      this.newTextElement = {text_id: this.textId} as TextElement;
+      this.newTextElement = {text_id: this.textId, start_time: this.newTextElement?.end_time} as TextElement;
       // Reload elements from DB so they appear at the end
       await this.loadTextElements();
     } catch (error) {

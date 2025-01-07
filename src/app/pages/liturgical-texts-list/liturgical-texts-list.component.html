@@ -12,7 +12,7 @@
 <ul>
   <li *ngFor="let lt of liturgicalTexts">
     <a [routerLink]="['/liturgicalTexts', lt.id]">
-      {{ lt.title }}
+      {{ lt.title ?  lt.title : 'Fără Titlu' }}
     </a>
   </li>
 </ul>
