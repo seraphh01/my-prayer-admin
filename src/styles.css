@@ -2,3 +2,83 @@
 td {
     padding: 0.5rem;
 }
+
+button {
+    background-color: white;
+    border-radius: 4px;
+    color: #ffe5ad;
+    background-color: #790822;
+    border: 1px solid black;
+    padding: 0.25rem 0.5rem;
+}
+
+body {
+    background-color: #ffe5ad ;
+}
+
+textarea {
+    width: 100%;
+    height: 100px;
+    padding: 12px 20px;
+    box-sizing: border-box;
+    border: 2px solid #790822;
+    border-radius: 4px;
+    background-color: #ffe5ad;
+    resize: vertical;
+}
+
+input {
+    padding: 0.5rem;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 2px solid #790822;
+    border-radius: 4px;
+    background-color: #ffe5ad;
+}
+
+select {
+    padding: 0.5rem;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 2px solid #790822;
+    border-radius: 4px;
+    background-color: #ffe5ad;
+}
+
+p {
+    font-size: 1rem;
+    color: #790822;
+}
+
+a {
+    color: #790822;
+}
+
+h1 {
+    color: #790822;
+}
+
+h2 {
+    color: #790822;
+}
+
+h3 {
+    color: #790822;
+}
+
+h4 {
+    color: #790822;
+}
+
+li {
+    color: #790822;
+}
+
+label {
+    color: #790822;
+}
+
+b {
+    color: #790822;
+}
+/*except those in the navbar*/

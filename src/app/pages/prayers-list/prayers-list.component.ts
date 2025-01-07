@@ -30,15 +30,10 @@ export class PrayersListComponent implements OnInit {
 
   addPrayer(): void {
     const title = this.newPrayer?.title.trim();
-    const subtitle = this.newPrayer?.subtitle!.trim();
-    const sequence = this.newPrayer?.sequence;
     if (!title) return;
 
     this.prayersService.create({
       title: title,
-      subtitle: subtitle,
-      sequence: sequence,
-      prayer_type_id: this.newPrayer?.prayer_type_id,
     }).then((result) => {
       this.newPrayer = {title: '', subtitle: '', sequence: 1} as any;
       this.prayers.splice(0, 0, result);

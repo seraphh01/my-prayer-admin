@@ -24,6 +24,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
   editedTitle = '';
 
   newTextElement: TextElement | null = null;
+  editedTextElement: TextElement | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -34,6 +35,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.textId = this.route.snapshot.paramMap.get('id') || '';
     this.newTextElement = {text_id: this.textId} as TextElement;
+    this.editedTextElement = {} as TextElement;
     await this.loadLiturgicalText();
   }
 
@@ -139,6 +141,26 @@ export class LiturgicalTextDetailComponent implements OnInit {
       this.text?.texts?.splice(index, 1);
     } catch (error) {
       console.error('Error deleting text element:', error);
+    }
+  }
+
+  setEditedTextElement(te: TextElement) {
+    this.editedTextElement = { ...te };
+  }
+
+  clearEditedTextElement() {
+    this.editedTextElement = {} as TextElement;
+  }
+
+  async editTextElement(index: number) {
+    if (!this.editedTextElement?.id || !this.editedTextElement.text) return;
+    try {
+      await this.textElementsService.update(this.editedTextElement.id, { ...this.editedTextElement });
+      // Update local array so the UI updates immediately
+      this.text?.texts?.splice(index, 1, { ...this.editedTextElement });
+      this.editedTextElement = {} as TextElement;
+    } catch (error: any) {
+      alert('A intervenit o eroare: ' + error.message);
     }
   }
 

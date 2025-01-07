@@ -6,27 +6,28 @@
   
     
         <h3>Detalii rugăciune</h3>
-      <p>
-        Titlu:
-        <input [(ngModel)]="prayer.title" />
-      </p>
-
-    <p>
-      Subtitlu:
-      <input [(ngModel)]="prayer.subtitle" />
-    </p>
-  
-    <p>
-      Ordine:
-      <input [(ngModel)]="prayer.sequence" type="number" />
-    </p>
-
-    <p>
-      Tip:
-      <select [(ngModel)]="prayer.prayer_type_id">
-        <option *ngFor="let type of prayerTypes" [value]="type.id">{{ type.type }}</option>
-      </select>
-      </p>
+      <table style="border-collapse: collapse; background: transparent;">
+        <tr>
+          <td>Titlu:</td>
+          <td><input [(ngModel)]="prayer.title" /></td>
+        </tr>
+        <tr>
+          <td>Subtitlu:</td>
+          <td><input [(ngModel)]="prayer.subtitle" /></td>
+        </tr>
+        <tr>
+          <td>Ordine:</td>
+          <td><input [(ngModel)]="prayer.sequence" type="number" /></td>
+        </tr>
+        <tr>
+          <td>Tip:</td>
+          <td style="padding: 0 16px;">
+        <select [(ngModel)]="prayer.prayer_type_id" >
+          <option *ngFor="let type of prayerTypes" [value]="type.id">{{ type.type }}</option>
+        </select>
+          </td>
+        </tr>
+      </table>
   
     <button (click)="updatePrayer()">Salvează</button>
   </div>

@@ -10,7 +10,7 @@ import { AuthService } from './core/services/auth.service';
   template: `
   <ng-container *ngIf="auth.isLoggedIn()">
   <nav>
-      <a style="display: inline; color: black">CONGREGAȚIA SURORILOR MAICII DOMNULUI - PANOU ADMINISTRARE</a>
+      <a style="display: inline; color: black"><b>PANOU ADMINISTRARE</b></a>
       <a routerLink="/prayers">Toate Rugăciunile</a>
       <a routerLink="/prayerTypes">Tipuri de Rugăciuni</a>
       <a routerLink="/sections">Secțiuni</a>
@@ -32,7 +32,7 @@ import { AuthService } from './core/services/auth.service';
     a {
       margin-right: 1rem;
       text-decoration: none;
-      color: #0056b3;
+      color: #790822;
     }
   `]
 })

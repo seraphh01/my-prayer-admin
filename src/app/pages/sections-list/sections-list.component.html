@@ -2,13 +2,12 @@
 <h2>Secțiuni</h2>
 
 <p>
-  <label for="newSectionTitle">Adăugați titlul unei secțiuni noi:</label>
+  <label for="newSectionTitle">Adăugați titlul unei secțiuni noi: </label>
   <input
     id="newSectionTitle"
     [(ngModel)]="newSectionTitle"
   />
-  <button (click)="addSection()">
-    <i class="fa fa-plus"></i> <!-- Example FontAwesome icon -->
+  <button (click)="addSection()" style="margin-left: 1rem">
     Adăugați
   </button>
 </p>
@@ -16,7 +15,10 @@
 <ul>
     <li *ngFor="let sec of sections">
         <a [routerLink]="['/sections', sec.id]">
-            <i class="fa fa-edit"></i> {{ sec.title }}
+            
+            <p>
+              {{ sec.title }}
+            </p>
         </a>
     </li>
 </ul>

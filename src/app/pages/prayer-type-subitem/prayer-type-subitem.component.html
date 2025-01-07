@@ -1,8 +1,9 @@
 <ng-container *ngIf="!isEditing; else editMode">
-    {{ node.type }}
+  <p>    {{ node.type }}
     <button (click)="enableEdit()"><i class="material-icons" style="font-size: 14px">edit</i></button>
     <button (click)="addSubtype()"><i class="material-icons" style="font-size: 14px">add</i></button>
-    <button (click)="deleteType()"><i class="material-icons" style="font-size: 14px">delete</i></button>
+    <button (click)="deleteType()"><i class="material-icons" style="font-size: 14px">delete</i></button></p>
+
   </ng-container>
   
   <ng-template #editMode>

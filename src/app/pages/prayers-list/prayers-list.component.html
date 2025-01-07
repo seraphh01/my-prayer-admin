@@ -7,22 +7,6 @@
       <td><label for="title">Titlu: </label></td>
       <td><input id="title" type="text" [(ngModel)]="newPrayer!.title" placeholder="Titlu rugăciune" /></td>
     </tr>
-    <tr>
-      <td><label for="subtitle">Subtitlu: </label></td>
-      <td><input id="subtitle" type="text" [(ngModel)]="newPrayer!.subtitle" placeholder="Subtitlu rugăciune" /></td>
-    </tr>
-    <tr>
-      <td><label for="sequence">Ordine: </label></td>
-      <td><input id="sequence" type="number" [(ngModel)]="newPrayer!.sequence" placeholder="Ordine rugăciune" /></td>
-    </tr>
-    <tr>
-      <td><label for="prayer_type_id">Tip: </label></td>
-      <td>
-        <select id="prayer_type_id" [(ngModel)]="newPrayer!.prayer_type_id">
-          <option *ngFor="let type of prayerTypes" [value]="type.id">{{ type.type }}</option>
-        </select>
-      </td>
-    </tr>
   </table>
   <button (click)="addPrayer()">Adaugă</button>
 </div>
@@ -30,7 +14,7 @@
 <hr>
 <ul>
   <li *ngFor="let prayer of prayers">
-    <a [routerLink]="['/prayers', prayer.id]">{{ prayer.title }} - {{prayer.subtitle}}</a>
+    <a [routerLink]="['/prayers', prayer.id]">{{ prayer.title }} {{prayer.subtitle?.length? '- ' + prayer.subtitle : ''}}</a>
   </li>
 </ul>
 <!--input for new prayer-->
