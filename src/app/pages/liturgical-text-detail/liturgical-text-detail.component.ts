@@ -26,6 +26,8 @@ export class LiturgicalTextDetailComponent implements OnInit {
   newTextElement: TextElement | null = null;
   editedTextElement: TextElement | null = null;
 
+  textTitle = '';
+
   constructor(
     private route: ActivatedRoute,
     private litTextService: LiturgicalTextsService,
@@ -44,6 +46,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
    */
   async loadLiturgicalText() {
     this.text = await this.litTextService.getById(this.textId);
+    this.textTitle = this.text?.title ?? '';
     this.newTextElement!.start_time = this.text?.texts?.length ? this.text.texts[this.text.texts.length - 1].end_time : 0;
   }
 
@@ -76,6 +79,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
       });
       if (updated) {
         alert('Textul a fost salvat!');
+        this.textTitle = this.text.title ?? '';
       }
     } catch (error) {
       console.error('Error updating title:', error);
@@ -139,6 +143,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
       await this.textElementsService.delete(id);
       // Remove from local array so the UI updates immediately
       this.text?.texts?.splice(index, 1);
+      this.newTextElement!.start_time = this.text?.texts?.length ? this.text.texts[this.text.texts.length - 1].end_time : 0;
     } catch (error) {
       console.error('Error deleting text element:', error);
     }

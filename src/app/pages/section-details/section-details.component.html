@@ -99,10 +99,17 @@
         <td>
           <select id="litTextSelect" [(ngModel)]="selectedLitTextId">
             <option value="">-- Alegeți --</option>
+            <option value="new" selected>-- Text nou --</option>
             <option *ngFor="let lt of allLitTexts" [value]="lt.id">
               {{ lt.title }}
             </option>
           </select>
+        </td>
+      </tr>
+      <tr *ngIf="selectedLitTextId === 'new'">
+        <td><label for="newTextTitle">Titlu:</label></td>
+        <td>
+          <input id="newTextTitle" type="text" [(ngModel)]="newLiturgicalTextTitle" placeholder="Ex: Născătoare de Dumnezeu" />
         </td>
       </tr>
       <tr>

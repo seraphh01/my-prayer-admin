@@ -34,10 +34,12 @@ export class SectionDetailsComponent implements OnInit {
   editedImageUrl = '';
 
   // For adding a new text
-  selectedLitTextId = '';
+  selectedLitTextId = 'new';
   newStartTime: number | null = 0;
   newEndTime: number | null = 0;
   newRepetitions = 1;
+
+  newLiturgicalTextTitle: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -146,7 +148,15 @@ export class SectionDetailsComponent implements OnInit {
     }
 
     try {
-      await this.sectionTextsService.create({
+
+      if(this.selectedLitTextId === 'new') { 
+        const newLitText = await this.litTextsService.create({
+          title: this.newLiturgicalTextTitle,
+        } as Partial<LiturgicalText>);
+        this.selectedLitTextId = newLitText.id;
+       }
+
+      let result = await this.sectionTextsService.create({
         prayer_section_id: this.sectionId,
         liturgical_text_id: this.selectedLitTextId,
         sequence: maxSeq + 1,
@@ -156,13 +166,15 @@ export class SectionDetailsComponent implements OnInit {
       } as Partial<SectionText>);
 
       // Reset form fields
-      this.selectedLitTextId = '';
+      this.newLiturgicalTextTitle = '';
+      this.selectedLitTextId = 'new';
       this.newStartTime = null;
       this.newEndTime = null;
       this.newRepetitions = 1;
 
       // Reload
-      await this.loadSectionTexts();
+      this.sectionTexts.push(result);
+      //await this.loadSectionTexts();
     } catch (error) {
       console.error('Eroare la adăugarea textului:', error);
     }

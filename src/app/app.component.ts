@@ -24,6 +24,9 @@ import { AuthService } from './core/services/auth.service';
   </ng-container>
 
     <router-outlet></router-outlet>
+
+
+    
   `,
   styles: [`
     nav {
@@ -34,6 +37,7 @@ import { AuthService } from './core/services/auth.service';
       text-decoration: none;
       color: #790822;
     }
+
   `]
 })
 export class AppComponent {

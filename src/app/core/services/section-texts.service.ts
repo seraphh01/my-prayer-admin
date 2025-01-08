@@ -14,6 +14,18 @@ export class SectionTextsService extends SupabaseTableService<SectionText> {
     super(supabase);
   }
 
+  override async create(item: Partial<SectionText>): Promise<SectionText> {
+      const { data, error } = await this.client
+        .from(this.tableName)
+        .insert([item])
+        .select("*, text: liturgical_texts(*)")
+        .single();
+  
+      if (error) throw error;
+      return data as SectionText;
+    
+  }
+
   // Example: we might add a method to reorder sequences in a transaction
   // or just update them individually when we swap.
 }

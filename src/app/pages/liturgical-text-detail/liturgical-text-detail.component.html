@@ -2,13 +2,13 @@
 <div *ngIf="text">
     <h2>
         <button (click)="goBack()"><i class="material-icons" style="font-size:16px" title="Înapoi">arrow_back</i></button>
-        {{ text.title }} 
+        {{ textTitle }} 
         <button (click)="deleteText()"><i class="material-icons" style="font-size:16px" title="Șterge">delete</i></button></h2>
     <p>
       Schimbă titlul:
       <input [(ngModel)]="text.title" style="width: fit-content" />
       <br>
-      Durata audio în medie:
+      Durata audio(secunde):
       <input [(ngModel)]="text.audio_time" style="width: fit-content" />
       <br>
       <button (click)="saveTitle()">Salvează</button>
@@ -24,9 +24,9 @@
     <li *ngFor="let elem of text?.texts; let i = index">
       <p *ngIf="editedTextElement?.id && elem.id == editedTextElement?.id; ">
         <textarea [(ngModel)]="editedTextElement!.text" rows="4" style="width:100%" ></textarea>
-        <label for="start_time">Timp de început</label>
+        <label for="start_time">Timp de început(secunde): </label>
         <input [(ngModel)]="editedTextElement!.start_time" />
-        <label for="end_time">Timp de sfârșit</label>
+        <label for="end_time">Timp de sfârșit(secunde): </label>
         <input [(ngModel)]="editedTextElement!.end_time" />
         <button (click)="editTextElement(i)"><i class="material-icons" style="font-size:12px" title="Șterge">save</i></button>
         <button (click)="clearEditedTextElement()"><i class="material-icons" style="font-size:12px" title="Șterge">cancel</i></button>
@@ -50,9 +50,9 @@
     <h4>Adaugă un text nou</h4>
     <label for="text">Text:</label>
     <textarea id="text" [(ngModel)]="newTextElement!.text" rows="4" style="width:100%" ></textarea>
-    <label for="start_time">Timp de început: </label>
+    <label for="start_time">Timp de început(secunde): </label>
     <input [(ngModel)]="newTextElement!.start_time" type="number" />
-    <label for="end_time">Timp de sfârșit: </label>
+    <label for="end_time">Timp de sfârșit(secunde): </label>
     <input [(ngModel)]="newTextElement!.end_time" type="number" />
     <br />
     <button (click)="addTextElement()">Adaugă</button>

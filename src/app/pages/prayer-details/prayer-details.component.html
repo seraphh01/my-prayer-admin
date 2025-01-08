@@ -21,7 +21,7 @@
         </tr>
         <tr>
           <td>Tip:</td>
-          <td style="padding: 0 16px;">
+          <td>
         <select [(ngModel)]="prayer.prayer_type_id" >
           <option *ngFor="let type of prayerTypes" [value]="type.id">{{ type.type }}</option>
         </select>
@@ -49,28 +49,40 @@
           <ul>
             <li *ngFor="let childSection of prayerSection.subsections">
               <p>
-                {{ childSection.section?.title }} - {{ childSection.section?.subtitle }}
+                <a href="/sections/{{childSection.section?.id}}">{{ childSection.section?.title }} - {{ childSection.section?.subtitle }}</a>
+                
                 <button (click)="deleteSection( childSection.id, prayerSection.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
               </p>
             </li>
             <li *ngIf="newPrayerSection?.parent_id === prayerSection.id">
+              <label for="section">Secțiune existentă:</label>
               <select [(ngModel)]="newPrayerSection!.section_id">
-                <option >-- Alegeți --</option>
+                <option selected>-- Alegeți --</option>
                 <option *ngFor="let section of sections" [value]="section.id">{{ section.title }}</option>
               </select>
               <button (click)="addPrayerSection(prayerSection.id)"><i class="material-icons" style="font-size: 12px">save</i></button>
+              <button (click)="hideNewSubsectionForm()"><i class="material-icons" style="font-size: 12px">delete</i></button>
+            </li>
+            <li *ngIf="newPrayerSection?.parent_id === prayerSection.id">
+              <label for="section">Titlu secțiune nouă:</label>
+              <input [(ngModel)]="newSectionTitle" placeholder="Titlu" />
+              <button (click)="addNewPrayerSection(prayerSection.id)"><i class="material-icons" style="font-size: 12px">save</i></button>
               <button (click)="hideNewSubsectionForm()"><i class="material-icons" style="font-size: 12px">delete</i></button>
             </li>
           </ul>
         </li>
       </ul>
 
-      <h4>Adaugă o secțiune nouă</h4>
+      <hr>
+      <h4>Adaugă o secțiune existentă</h4>
       <select [(ngModel)]="newPrayerSection!.section_id">
         <option value="">-- Alegeți --</option>
         <option *ngFor="let section of sections" [value]="section.id">{{ section.title}} {{ section.subtitle?.length ? '- ' + section.subtitle : ''}}</option>
       </select>
       <button (click)="addPrayerSection()">Adaugă</button>
+      <h4>Creeaza și adaugă o secțiune nouă</h4>
+      <input [(ngModel)]="newSectionTitle" placeholder="Titlu" />
+      <button (click)="addNewPrayerSection()">Adaugă</button>
     </div>
 
     <hr>

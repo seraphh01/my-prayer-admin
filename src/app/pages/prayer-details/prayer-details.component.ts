@@ -32,7 +32,7 @@ export class PrayerDetailComponent implements OnInit {
   id!: string;
 
   newPrayerSection: PrayerSection | null = null;
-
+  newSectionTitle: string = '';
   newPrayerDateGroup: PrayerDateGroup | null = null;
 
   constructor(
@@ -133,6 +133,18 @@ export class PrayerDetailComponent implements OnInit {
       }
     }).catch((error) => {
       alert('Error creating subsection: ' + error);
+    });
+  }
+
+  addNewPrayerSection(parent_id: string | null = null) {
+    if (!this.newSectionTitle) return;
+
+    this.sectionsService.create({title: this.newSectionTitle, audio_url: ''}).then((section) => {
+      this.newPrayerSection = {prayer_id: this.id, section_id: section.id, sequence: 1} as PrayerSection;
+      this.addPrayerSection(parent_id);
+      this.newSectionTitle = '';
+    }).catch((error) => {
+      alert('Error creating section: ' + error);
     });
   }
 
