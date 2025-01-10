@@ -73,6 +73,7 @@ export class PrayerDetailComponent implements OnInit {
       title: this.prayer.title,
       subtitle: this.prayer.subtitle,
       sequence: this.prayer.sequence,
+      prayer_type_id: this.prayer.prayer_type_id,
     });
     if (updated) {
       alert('Prayer updated successfully!');

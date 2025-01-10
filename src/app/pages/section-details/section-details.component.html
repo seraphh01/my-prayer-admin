@@ -27,8 +27,8 @@
                   <td><input [(ngModel)]="editedAudioUrl" /></td>
                 </tr>
                 <tr>
-                  <td><label>Durată (secunde):</label></td>
-                  <td><input [(ngModel)]="editedDuration" type="number" /></td>
+                  <td><label>Durată:</label></td>
+                  <td><input [(ngModel)]="editedDuration" type="text" timeInput /></td>
                 </tr>
                 <tr>
                   <td><label>URL Imagine:</label></td>
@@ -61,31 +61,53 @@
       <tr>
         <th style="padding: 8px;">#</th>
         <th style="padding: 8px;">Text</th>
-        <th style="padding: 8px;">Acțiuni</th>
         <th style="padding: 8px;">Interval</th>
+        <th style="padding: 8px;">Acțiuni</th>
       </tr>
       <tr *ngFor="let st of sectionTexts; let i = index" [ngStyle]="{'background-color': i % 2 === 0 ? '#f2f2f2' : 'white'}">
         <td style="padding: 8px;">{{ i + 1 }}</td>
-        <td>
-            <span *ngIf="allLitTexts && allLitTexts.length">
-                {{ st?.repetition! > 1 ? st.repetition + ' x' : ''}}
-                <a [routerLink]="['/liturgicalTexts', st.liturgical_text_id]">
-                  {{ st?.text?.title?.length ? st?.text?.title : 'Fără Titlu' }}
-                </a>
-              </span>
-        </td>
+        <ng-container *ngIf="editingSectionText === null || editingSectionText.id !== st.id;">
+            <td >
+              <span *ngIf="allLitTexts && allLitTexts.length">
+                  {{ st?.repetition! > 1 ? st.repetition + ' x' : ''}}
+                  <a [routerLink]="['/liturgicalTexts', st.liturgical_text_id, st.start_time]">
+                    {{ st?.text?.title?.length ? st?.text?.title : 'Fără Titlu' }}
+                  </a>
+                </span>
+            </td>
 
-          
-        <td style="padding: 8px;">
-          <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
-          <button (click)="moveDown(i)" [disabled]="i === sectionTexts.length - 1" title="Mută în jos">↓</button>
-          <button (click)="deleteSectionText(st, i)">
-            <i class="material-icons" style="font-size:12px" title="Șterge">delete</i>
-          </button>
-        </td>
-        <td style="padding: 8px; ">
-          {{ st.start_time }} → {{ st.end_time }}
-        </td>
+            <td style="padding: 8px; ">
+              {{ st.start_time ?? 0 | timeFormat}} → {{ st.end_time ?? 0 | timeFormat  }}
+            </td>
+            <td style="padding: 8px;" *ngIf="!editingSectionText">
+              <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
+              <button (click)="moveDown(i)" [disabled]="i === sectionTexts.length - 1" title="Mută în jos">↓</button>
+              <button (click)="deleteSectionText(st, i)">
+                <i class="material-icons" style="font-size:12px" title="Șterge">delete</i>
+              </button>
+              <button (click)="setEditingSectionText(st)">
+                <i class="material-icons" style="font-size:12px" title="Editează">edit</i>
+              </button>
+            </td>
+        </ng-container>
+        <ng-container *ngIf="editingSectionText !== null && editingSectionText.id === st.id;">
+          <td>
+            {{st.text?.title}}, 
+            <label>Repetări: </label>
+            <input type="number" [(ngModel)]="editingSectionText.repetition" style="width: 60px;"/>
+
+          </td>
+          <td>
+            <input id="startTime" type="text" [(ngModel)]="editingSectionText.start_time" timeInput style="width: 60px;"/>
+            →
+            <input id="endTime" type="text" [(ngModel)]="editingSectionText.end_time" timeInput style="width: 60px;"/>
+          </td>
+          <td>
+            <button (click)="saveEditedSectionText()">
+              <i class="material-icons" style="font-size:12px" title="Salveaza">save</i></button>
+            <button (click)="clearEditingSectionText()"><i class="material-icons" style="font-size:12px" title="Renunță">cancel</i></button>
+          </td>
+        </ng-container>
       </tr>
     </table>
   
@@ -113,15 +135,15 @@
         </td>
       </tr>
       <tr>
-        <td><label for="startTime">Start Time:</label></td>
+        <td><label for="startTime">Timp început:</label></td>
         <td>
-          <input id="startTime" type="number" [(ngModel)]="newStartTime" placeholder="Ex: 0" />
+          <input id="startTime" type="text" [(ngModel)]="newStartTime" placeholder="Ex: 0" timeInput />
         </td>
       </tr>
       <tr>
-        <td><label for="endTime">End Time:</label></td>
+        <td><label for="endTime">Timp sfârșit:</label></td>
         <td>
-          <input id="endTime" type="number" [(ngModel)]="newEndTime" placeholder="Ex: 20" />
+          <input id="endTime" type="text" [(ngModel)]="newEndTime" placeholder="Ex: 20" timeInput/>
         </td>
       </tr>
       <tr>

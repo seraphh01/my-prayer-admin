@@ -36,7 +36,6 @@ export class SectionsListComponent implements OnInit {
         title,
         audio_url: '',
         subtitle: null,
-        duration: 500,
         image_url: null,
       } as Partial<Section>);
       this.newSectionTitle = '';

@@ -17,7 +17,7 @@
         <a [routerLink]="['/sections', sec.id]">
             
             <p>
-              {{ sec.title }}
+              {{ sec.title }} {{ sec.subtitle ? ' - ' + sec.subtitle : '' }}
             </p>
         </a>
     </li>

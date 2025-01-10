@@ -8,8 +8,8 @@
       Schimbă titlul:
       <input [(ngModel)]="text.title" style="width: fit-content" />
       <br>
-      Durata audio(secunde):
-      <input [(ngModel)]="text.audio_time" style="width: fit-content" />
+      Durata audio:
+      <input [(ngModel)]="text.audio_time" style="width: fit-content" timeInput />
       <br>
       <button (click)="saveTitle()">Salvează</button>
     </p>
@@ -18,21 +18,22 @@
   <hr />
   
   <h3>Texte</h3>
-
+  <label for="section_start_time">Timp început în secțiune(orientativ): </label>
+  <input [(ngModel)]="sectionStartTime" type="text" timeInput />
   <p *ngIf="!text?.texts?.length">Nu sunt texte adăugate</p>
 <ol>
     <li *ngFor="let elem of text?.texts; let i = index">
       <p *ngIf="editedTextElement?.id && elem.id == editedTextElement?.id; ">
         <textarea [(ngModel)]="editedTextElement!.text" rows="4" style="width:100%" ></textarea>
-        <label for="start_time">Timp de început(secunde): </label>
-        <input [(ngModel)]="editedTextElement!.start_time" />
-        <label for="end_time">Timp de sfârșit(secunde): </label>
-        <input [(ngModel)]="editedTextElement!.end_time" />
+        <label for="start_time">Timp început: </label>
+        <input [(ngModel)]="editedTextElement!.start_time" timeInput/>
+        <label for="end_time">Timp sfârșit: </label>
+        <input [(ngModel)]="editedTextElement!.end_time" timeInput />
         <button (click)="editTextElement(i)"><i class="material-icons" style="font-size:12px" title="Șterge">save</i></button>
         <button (click)="clearEditedTextElement()"><i class="material-icons" style="font-size:12px" title="Șterge">cancel</i></button>
       </p>
         <p *ngIf="!editedTextElement?.id || elem.id != editedTextElement?.id; ">
-          {{ elem.text }} <span *ngIf="elem.start_time != null && elem.end_time != null">{{ elem.start_time }} → {{ elem.end_time }}</span>
+          {{ elem.text }} <span *ngIf="elem.start_time != null && elem.end_time != null">{{ (elem.start_time + (sectionStartTime ?? 0)) | timeFormat }} → {{ (elem.end_time + (sectionStartTime ?? 0)) | timeFormat}}</span>
 
           <span style="display: inline; margin-left: 1rem;">
             <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
@@ -50,10 +51,11 @@
     <h4>Adaugă un text nou</h4>
     <label for="text">Text:</label>
     <textarea id="text" [(ngModel)]="newTextElement!.text" rows="4" style="width:100%" ></textarea>
-    <label for="start_time">Timp de început(secunde): </label>
-    <input [(ngModel)]="newTextElement!.start_time" type="number" />
-    <label for="end_time">Timp de sfârșit(secunde): </label>
-    <input [(ngModel)]="newTextElement!.end_time" type="number" />
+
+    <label for="start_time">Timp început: </label>
+    <input [(ngModel)]="newTextElement!.start_time" type="text" timeInput />
+    <label for="end_time">Timp sfârșit: </label>
+    <input [(ngModel)]="newTextElement!.end_time" type="text" timeInput />
     <br />
     <button (click)="addTextElement()">Adaugă</button>
   </div>

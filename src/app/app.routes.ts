@@ -15,6 +15,7 @@ export const routes: Routes = [
   { path: 'prayers/:id', component: PrayerDetailComponent, canActivate: [AuthGuard] },
   { path: 'prayerTypes', component: PrayerTypesListComponent, canActivate: [AuthGuard] },
   { path: 'liturgicalTexts', component: LiturgicalTextsListComponent, canActivate: [AuthGuard] },
+  { path: 'liturgicalTexts/:id/:sectionStartTime', component: LiturgicalTextDetailComponent, canActivate: [AuthGuard] },
   { path: 'liturgicalTexts/:id', component: LiturgicalTextDetailComponent, canActivate: [AuthGuard] },
   { path: 'sections', component: SectionsListComponent, canActivate: [AuthGuard] },
   { path: 'sections/:id', component: SectionDetailsComponent, canActivate: [AuthGuard] },

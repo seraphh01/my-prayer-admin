@@ -8,13 +8,15 @@ import { LiturgicalText } from '../../core/models/liturgical-text.model';
 import { TextElement } from '../../core/models/text-element.model';
 import { LiturgicalTextsService } from '../../core/services/liturgical-text.service';
 import { TextElementsService } from '../../core/services/text-element.service';
+import { TimeInputDirective } from '../../core/directives/time-input.directive';
+import { TimePipe } from '../../core/directives/time.pipe';
 
 @Component({
   standalone: true,
   selector: 'app-liturgical-text-detail',
   templateUrl: './liturgical-text-detail.component.html',
   styleUrls: ['./liturgical-text-detail.component.css'],
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TimeInputDirective, TimePipe],
 })
 export class LiturgicalTextDetailComponent implements OnInit {
   textId!: string;
@@ -26,6 +28,8 @@ export class LiturgicalTextDetailComponent implements OnInit {
   newTextElement: TextElement | null = null;
   editedTextElement: TextElement | null = null;
 
+  sectionStartTime: number | null = 0;
+
   textTitle = '';
 
   constructor(
@@ -36,6 +40,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     this.textId = this.route.snapshot.paramMap.get('id') || '';
+    this.sectionStartTime = parseInt(this.route.snapshot.paramMap.get('sectionStartTime') || '0');
     this.newTextElement = {text_id: this.textId} as TextElement;
     this.editedTextElement = {} as TextElement;
     await this.loadLiturgicalText();
@@ -105,10 +110,10 @@ export class LiturgicalTextDetailComponent implements OnInit {
         text: trimmedText,
         sequence: maxSeq + 1,
         text_id: this.textId,
-        start_time: this.newTextElement?.start_time,
-        end_time: this.newTextElement?.end_time,
+        start_time:  (this.newTextElement?.start_time ?? 0) - (this.sectionStartTime ?? 0),
+        end_time: (this.newTextElement?.end_time ?? 0)- (this.sectionStartTime ?? 0) ,
       });
-      this.newTextElement = {text_id: this.textId, start_time: this.newTextElement?.end_time} as TextElement;
+      this.newTextElement = {text_id: this.textId, start_time: this.newTextElement?.end_time, end_time:this.newTextElement?.end_time} as TextElement;
       // Reload elements from DB so they appear at the end
       await this.loadTextElements();
     } catch (error) {
@@ -143,7 +148,8 @@ export class LiturgicalTextDetailComponent implements OnInit {
       await this.textElementsService.delete(id);
       // Remove from local array so the UI updates immediately
       this.text?.texts?.splice(index, 1);
-      this.newTextElement!.start_time = this.text?.texts?.length ? this.text.texts[this.text.texts.length - 1].end_time : 0;
+      this.newTextElement!.start_time = this.text?.texts?.length ? (this.text.texts[this.text.texts.length - 1].end_time ?? 0) + (this.sectionStartTime ?? 0) : 0;
+      this.newTextElement!.end_time = this.text?.texts?.length ? (this.text.texts[this.text.texts.length - 1].end_time ?? 0) + (this.sectionStartTime ?? 0) : 0;
     } catch (error) {
       console.error('Error deleting text element:', error);
     }
@@ -227,5 +233,11 @@ export class LiturgicalTextDetailComponent implements OnInit {
     } catch (error) {
       console.error('Error moving element down:', error);
     }
+  }
+
+  secondsToTimeFormat(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? '0' + secs : secs}`;
   }
 }

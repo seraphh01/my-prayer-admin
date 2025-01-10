@@ -10,6 +10,8 @@ import { Section } from '../../core/models/section.model';
 import { LiturgicalTextsService } from '../../core/services/liturgical-text.service';
 import { SectionTextsService } from '../../core/services/section-texts.service';
 import { SectionsService } from '../../core/services/sections.service';
+import { TimeInputDirective } from '../../core/directives/time-input.directive';
+import { TimePipe } from '../../core/directives/time.pipe';
 
 
 @Component({
@@ -17,7 +19,7 @@ import { SectionsService } from '../../core/services/sections.service';
   selector: 'app-section-detail',
   templateUrl: './section-details.component.html',
   styleUrls: ['./section-details.component.css'],
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, TimeInputDirective, TimePipe],
 })
 export class SectionDetailsComponent implements OnInit {
   sectionId!: string;
@@ -40,6 +42,8 @@ export class SectionDetailsComponent implements OnInit {
   newRepetitions = 1;
 
   newLiturgicalTextTitle: string = '';
+
+  editingSectionText: SectionText | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -101,6 +105,7 @@ export class SectionDetailsComponent implements OnInit {
 
     if (!error && data) {
       this.sectionTexts = data;
+      this.newStartTime = this.sectionTexts.length > 0 ? this.sectionTexts[this.sectionTexts.length - 1].end_time : 0;
     }
   }
 
@@ -168,7 +173,7 @@ export class SectionDetailsComponent implements OnInit {
       // Reset form fields
       this.newLiturgicalTextTitle = '';
       this.selectedLitTextId = 'new';
-      this.newStartTime = null;
+      this.newStartTime = this.newEndTime;
       this.newEndTime = null;
       this.newRepetitions = 1;
 
@@ -237,6 +242,24 @@ export class SectionDetailsComponent implements OnInit {
     } catch (error) {
       console.error('Eroare la mutare în jos:', error);
     }
+  }
+
+  setEditingSectionText(st: SectionText) {
+    this.editingSectionText = st;
+  }
+
+  clearEditingSectionText() {
+    this.editingSectionText = null;
+  }
+
+  saveEditedSectionText() {
+    if (!this.editingSectionText) return;
+    this.sectionTextsService.update(this.editingSectionText.id, {
+      start_time: this.editingSectionText.start_time,
+      end_time: this.editingSectionText.end_time,
+      repetition: this.editingSectionText.repetition,
+    });
+    this.editingSectionText = null;
   }
 
   /**

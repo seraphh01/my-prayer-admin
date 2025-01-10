@@ -5,6 +5,7 @@ import { AuthService } from './app/core/services/auth.service';
 import { provideRouter } from '@angular/router';
 import { APP_INITIALIZER } from '@angular/core';
 import { routes } from './app/app.routes';
+import { provideEnvironmentNgxMask, provideNgxMask } from 'ngx-mask';
 
 // This factory returns a function that calls initSession()
 // and returns a Promise, blocking the bootstrap until resolved
@@ -15,6 +16,7 @@ export function initSessionFactory(authService: AuthService) {
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
+    provideEnvironmentNgxMask(),
     {
       provide: APP_INITIALIZER,
       useFactory: initSessionFactory,
