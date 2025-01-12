@@ -1,0 +1,24 @@
+<div class="audio-player">
+    <audio #audioPlayer (timeupdate)="updateCurrentTime()" (loadeddata)="updateCurrentTime()">
+      <source [src]="section.audio_url" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+  
+    <div class="controls">
+      <button (click)="playPause()">
+        {{ isPlaying ? 'Pause' : 'Play' }}
+      </button>
+    </div>
+  
+    <div class="timeline-container">
+      <div class="timeline">
+        <div class="progress-bar" ></div>
+        <div *ngFor="let marker of section.texts" class="marker-range" 
+             [style.left]="getMarkerPosition(marker.start_time!) + '%'"
+             [style.width]="getMarkerWidth(marker.start_time!, marker.end_time!) + '%'">
+          <span class="marker-text">{{ marker.text }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  

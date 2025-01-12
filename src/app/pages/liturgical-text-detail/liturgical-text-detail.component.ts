@@ -52,7 +52,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
   async loadLiturgicalText() {
     this.text = await this.litTextService.getById(this.textId);
     this.textTitle = this.text?.title ?? '';
-    this.newTextElement!.start_time = this.text?.texts?.length ? this.text.texts[this.text.texts.length - 1].end_time : 0;
+    this.newTextElement!.start_time = this.text?.texts?.length ? this.text.texts[this.text.texts.length - 1].end_time! + this.sectionStartTime! : this.sectionStartTime;
   }
 
   /**
@@ -157,6 +157,8 @@ export class LiturgicalTextDetailComponent implements OnInit {
 
   setEditedTextElement(te: TextElement) {
     this.editedTextElement = { ...te };
+    this.editedTextElement.start_time! += this.sectionStartTime ?? 0;
+    this.editedTextElement.end_time! += this.sectionStartTime ?? 0;
   }
 
   clearEditedTextElement() {
@@ -166,6 +168,8 @@ export class LiturgicalTextDetailComponent implements OnInit {
   async editTextElement(index: number) {
     if (!this.editedTextElement?.id || !this.editedTextElement.text) return;
     try {
+      this.editedTextElement.start_time! -= this.sectionStartTime ?? 0;
+      this.editedTextElement.end_time! -= this.sectionStartTime ?? 0;
       await this.textElementsService.update(this.editedTextElement.id, { ...this.editedTextElement });
       // Update local array so the UI updates immediately
       this.text?.texts?.splice(index, 1, { ...this.editedTextElement });

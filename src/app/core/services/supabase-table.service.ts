@@ -2,7 +2,7 @@
 import { SupabaseService } from './supabase.service';
 import { SupabaseClient } from '@supabase/supabase-js';
 
-export abstract class SupabaseTableService<T extends { id: string | number }> {
+export abstract class SupabaseTableService<T extends { id?: string | number }> {
   // Each extending service must specify its table name
   protected abstract tableName: string;
 
@@ -87,5 +87,20 @@ export abstract class SupabaseTableService<T extends { id: string | number }> {
       .eq('id', id);
 
     if (error) throw error;
+  }
+
+  /**
+   * Perform a bulk insert or update.
+   * @param items T[]
+   * @returns Promise<T[]>
+   */
+  async bulkUpdate(items: T[]): Promise<T[]> {
+    const { data, error } = await this.client
+      .from(this.tableName)
+      .upsert(items).select();
+
+      console.log(error);
+    if (error || !data) throw error;
+    return data as T[];
   }
 }

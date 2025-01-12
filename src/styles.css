@@ -81,4 +81,30 @@ label {
 b {
     color: #790822;
 }
+
+audio {
+    margin: 0.5rem;
+    color:#790822;
+}
+
+input[type=checkbox] {
+    margin-right: 0.5rem;
+    color: #790822;
+}
+
+audio::-webkit-media-controls-panel {
+    background-color: #790822;
+}
+
+hr {
+    border: 1px solid #790822;
+}
+
+div{
+    margin-left: 1rem;
+}
+
 /*except those in the navbar*/
+
+html, body { height: 100%; }
+body {  margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink, RouterModule } from '@angular/router';
 import { Prayer } from '../../core/models/prayer.model';
 import { PrayersService } from '../../core/services/prayers.service';
 import { PrayerType } from '../../core/models/prayer-type.model';
@@ -20,7 +20,7 @@ import { PrayerDateGroup } from '../../core/models/prayer-date-group.model';
 @Component({
   standalone: true,
   selector: 'app-prayer-detail',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule, RouterLink],
   templateUrl: './prayer-details.component.html',
   styleUrls: ['./prayer-details.component.css'],
 })

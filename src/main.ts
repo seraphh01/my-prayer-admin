@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { APP_INITIALIZER } from '@angular/core';
 import { routes } from './app/app.routes';
 import { provideEnvironmentNgxMask, provideNgxMask } from 'ngx-mask';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 // This factory returns a function that calls initSession()
 // and returns a Promise, blocking the bootstrap until resolved
@@ -22,6 +23,6 @@ bootstrapApplication(AppComponent, {
       useFactory: initSessionFactory,
       deps: [AuthService],
       multi: true,
-    },
+    }, provideAnimationsAsync(),
   ],
 });

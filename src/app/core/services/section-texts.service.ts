@@ -18,12 +18,11 @@ export class SectionTextsService extends SupabaseTableService<SectionText> {
       const { data, error } = await this.client
         .from(this.tableName)
         .insert([item])
-        .select("*, text: liturgical_texts(*)")
+        .select("*, text: liturgical_texts(*), section_text_elements(*, text_element: text_elements(*))")
         .single();
   
       if (error) throw error;
       return data as SectionText;
-    
   }
 
   // Example: we might add a method to reorder sequences in a transaction

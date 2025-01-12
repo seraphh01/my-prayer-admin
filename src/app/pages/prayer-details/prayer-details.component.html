@@ -31,9 +31,9 @@
   
     <button (click)="updatePrayer()">Salvează</button>
   </div>
-
+</div>
     <hr>
-
+<div>
     <div>
 
       <h3>Secțiuni</h3>
@@ -41,7 +41,7 @@
       <ul>
         <li *ngFor="let prayerSection of prayer?.sections; let i = index">
           <p>
-            <a  href="/sections/{{prayerSection.section?.id}}">{{ prayerSection.section?.title }} {{ prayerSection.section?.subtitle?.length ? '-' + prayerSection.section?.subtitle : ''}}</a>
+            <a [routerLink]="['/sections', prayerSection.section?.id]">{{ prayerSection.section?.title }} {{ prayerSection.section?.subtitle?.length ? '-' + prayerSection.section?.subtitle : ''}}</a>
             
             <button (click)="deleteSection(prayerSection.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
             <button (click)="displayNewSubsectionForm(prayerSection.id)"><i class="material-icons" style="font-size: 12px">add</i></button>
@@ -49,7 +49,7 @@
           <ul>
             <li *ngFor="let childSection of prayerSection.subsections">
               <p>
-                <a href="/sections/{{childSection.section?.id}}">{{ childSection.section?.title }} - {{ childSection.section?.subtitle }}</a>
+                <a [routerLink]="['/sections', childSection.section?.id]">{{ childSection.section?.title }} - {{ childSection.section?.subtitle }}</a>
                 
                 <button (click)="deleteSection( childSection.id, prayerSection.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
               </p>
@@ -72,8 +72,9 @@
           </ul>
         </li>
       </ul>
-
+</div>
       <hr>
+      <div>
       <h4>Adaugă o secțiune existentă</h4>
       <select [(ngModel)]="newPrayerSection!.section_id">
         <option value="">-- Alegeți --</option>
@@ -84,9 +85,9 @@
       <input [(ngModel)]="newSectionTitle" placeholder="Titlu" />
       <button (click)="addNewPrayerSection()">Adaugă</button>
     </div>
-
+</div>
     <hr>
-
+<div>
     <div>
       <h3>Grupe de dată</h3>
       <p *ngIf="!prayer?.date_groups?.length">Nu sunt grupe de dată adăugate</p>

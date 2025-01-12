@@ -1,0 +1,48 @@
+.audio-player {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .controls {
+    margin-bottom: 10px;
+  }
+  
+  .timeline-container {
+    position: relative;
+    width: 100%;
+    height: 10px;
+    background-color: #ddd;
+    margin-top: 10px;
+  }
+  
+  .timeline {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .progress-bar {
+    height: 100%;
+    background-color: #4caf50;
+  }
+  
+  .marker-range {
+    position: absolute;
+    bottom: 0;
+    height: 10px;
+    background-color: red;
+    cursor: pointer;
+  }
+  
+  .marker-text {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    color: red;
+    font-size: 12px;
+    white-space: nowrap;
+    transform: translateX(-50%);
+  }
+  

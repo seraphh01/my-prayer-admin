@@ -5,13 +5,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { LiturgicalText } from '../../core/models/liturgical-text.model';
-import { SectionText } from '../../core/models/section-text.model';
+import { SectionText, SectionTextElement } from '../../core/models/section-text.model';
 import { Section } from '../../core/models/section.model';
 import { LiturgicalTextsService } from '../../core/services/liturgical-text.service';
 import { SectionTextsService } from '../../core/services/section-texts.service';
 import { SectionsService } from '../../core/services/sections.service';
 import { TimeInputDirective } from '../../core/directives/time-input.directive';
 import { TimePipe } from '../../core/directives/time.pipe';
+import { AudioPlayerComponent } from "./audio-player/audio-player.component";
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { SectionTextElementsService } from '../../core/services/section-text-elements.service';
 
 
 @Component({
@@ -19,7 +23,7 @@ import { TimePipe } from '../../core/directives/time.pipe';
   selector: 'app-section-detail',
   templateUrl: './section-details.component.html',
   styleUrls: ['./section-details.component.css'],
-  imports: [CommonModule, FormsModule, RouterLink, TimeInputDirective, TimePipe],
+  imports: [CommonModule, FormsModule, RouterLink, TimeInputDirective, TimePipe, AudioPlayerComponent, MatInputModule, MatFormFieldModule],
 })
 export class SectionDetailsComponent implements OnInit {
   sectionId!: string;
@@ -50,8 +54,9 @@ export class SectionDetailsComponent implements OnInit {
     private router: Router,
     private sectionsService: SectionsService,
     private sectionTextsService: SectionTextsService,
-    private litTextsService: LiturgicalTextsService
-  ) {}
+    private litTextsService: LiturgicalTextsService,
+    private sectionTextElementsService: SectionTextElementsService
+  ) { }
 
   async ngOnInit(): Promise<void> {
     this.sectionId = this.route.snapshot.paramMap.get('id') || '';
@@ -99,12 +104,15 @@ export class SectionDetailsComponent implements OnInit {
     // Example direct query to the supabase client
     const { data, error } = await this.sectionTextsService.client
       .from('section_texts')
-      .select('*, text: liturgical_texts(*)') // Include the liturgical_text
+      .select('*, text: liturgical_texts(*, texts: text_elements(*)), section_text_elements: section_text_elements(*, text_element: text_elements(*))') // Include the liturgical_text
       .eq('prayer_section_id', this.sectionId) // or "section_id"
-      .order('sequence', { ascending: true });
+      .order('sequence', { ascending: true })
+      .order('sequence', { ascending: true, foreignTable: 'liturgical_texts.text_elements' })
+      .order('sequence', { ascending: true, foreignTable: 'section_text_elements' });
 
     if (!error && data) {
       this.sectionTexts = data;
+
       this.newStartTime = this.sectionTexts.length > 0 ? this.sectionTexts[this.sectionTexts.length - 1].end_time : 0;
     }
   }
@@ -154,12 +162,12 @@ export class SectionDetailsComponent implements OnInit {
 
     try {
 
-      if(this.selectedLitTextId === 'new') { 
+      if (this.selectedLitTextId === 'new') {
         const newLitText = await this.litTextsService.create({
           title: this.newLiturgicalTextTitle,
         } as Partial<LiturgicalText>);
         this.selectedLitTextId = newLitText.id;
-       }
+      }
 
       let result = await this.sectionTextsService.create({
         prayer_section_id: this.sectionId,
@@ -245,20 +253,54 @@ export class SectionDetailsComponent implements OnInit {
   }
 
   setEditingSectionText(st: SectionText) {
-    this.editingSectionText = st;
+    this.editingSectionText = JSON.parse(JSON.stringify(st)) as SectionText;
+
+
+    if (!this.editingSectionText.section_text_elements?.length || (this.editingSectionText.section_text_elements?.length !== this.editingSectionText.text?.texts?.length)) {
+      this.editingSectionText.section_text_elements = this.editingSectionText.text?.texts?.map((textElement) =>
+      ({
+        section_text_id: this.editingSectionText!.id,
+        text_element_id: textElement.id,
+        start_time: (textElement.start_time ?? 0) + (this.editingSectionText?.start_time ?? 0),
+        end_time: (textElement.end_time ?? 0) + (this.editingSectionText?.start_time ?? 0),
+        sequence: textElement.sequence,
+        text_element: textElement
+      } as SectionTextElement));
+    } else {
+      this.editingSectionText.section_text_elements?.forEach((ste) => {
+        ste.start_time = (this.editingSectionText?.start_time ?? 0) + ste.start_time;
+        ste.end_time = (this.editingSectionText?.start_time ?? 0) + ste.end_time;
+      });
+    }
+
   }
 
   clearEditingSectionText() {
     this.editingSectionText = null;
   }
 
-  saveEditedSectionText() {
+  async saveEditedSectionText() {
     if (!this.editingSectionText) return;
-    this.sectionTextsService.update(this.editingSectionText.id, {
+    let updatedSectionText = await this.sectionTextsService.update(this.editingSectionText.id, {
       start_time: this.editingSectionText.start_time,
       end_time: this.editingSectionText.end_time,
       repetition: this.editingSectionText.repetition,
+      use_custom_times: this.editingSectionText.use_custom_times,
     });
+
+    let editedSectionText = this.sectionTexts.find((st) => st.id === this.editingSectionText?.id);
+
+    if (this.editingSectionText.use_custom_times) {
+      let bulkUpdateSectionTextElements = this.editingSectionText.section_text_elements?.map((text) => ({ start_time: text.start_time - (this.editingSectionText?.start_time ?? 0), end_time: text.end_time - (this.editingSectionText?.start_time ?? 0), text_element_id: text.text_element_id, section_text_id: text.section_text_id } as SectionTextElement)) ?? [];
+      await this.sectionTextElementsService.bulkUpdate(bulkUpdateSectionTextElements);
+
+      editedSectionText!.section_text_elements = this.editingSectionText.section_text_elements?.map((text) => ({ start_time: text.start_time - (this.editingSectionText?.start_time ?? 0), end_time: text.end_time - (this.editingSectionText?.start_time ?? 0), text_element_id: text.text_element_id, section_text_id: text.section_text_id, text_element: text.text_element } as SectionTextElement)) ?? [];;
+    }
+
+    editedSectionText!.repetition = updatedSectionText.repetition;
+    editedSectionText!.start_time = updatedSectionText.start_time;
+    editedSectionText!.end_time = updatedSectionText.end_time;
+    editedSectionText!.use_custom_times = updatedSectionText.use_custom_times;
     this.editingSectionText = null;
   }
 

@@ -1,12 +1,10 @@
-td {
-    text-align: left;
-    align-items: center;
-}
 
-table.sections-texts {
-    tr, td {
-        border: 1px solid #790822;
-        background-color: #ffe5ad;
-        color: #790822;
-    }
+
+.section_edit_fields {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 10px;
+    gap: 1rem;
 }

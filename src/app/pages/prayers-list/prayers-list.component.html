@@ -1,17 +1,10 @@
-<h2>Rugăciuni</h2>
-
 <div style="margin-bottom: 1rem;">
-  <h3>Adaugă o rugăciune nouă</h3>
-  <table style="border-collapse: collapse;">
-    <tr>
-      <td><label for="title">Titlu: </label></td>
-      <td><input id="title" type="text" [(ngModel)]="newPrayer!.title" placeholder="Titlu rugăciune" /></td>
-    </tr>
-  </table>
+  <h2>Rugăciuni</h2>
+  <label for="title">Adaugă o rugăciune nouă: </label>
+      <input id="title" type="text" [(ngModel)]="newPrayer!.title" placeholder="Titlu rugăciune" />
   <button (click)="addPrayer()">Adaugă</button>
 </div>
 
-<hr>
 <ul>
   <li *ngFor="let prayer of prayers">
     <a [routerLink]="['/prayers', prayer.id]">{{ prayer.title }} {{prayer.subtitle?.length? '- ' + prayer.subtitle : ''}}</a>

@@ -1,24 +1,26 @@
 <!-- src/app/pages/sections-list/sections-list.component.html -->
-<h2>Secțiuni</h2>
+<div>
+  <h2>Secțiuni</h2>
+  <p>
+    <label for="newSectionTitle">Adăugați o secțiune nouă: </label>
+    <input
+      id="newSectionTitle"
+      [(ngModel)]="newSectionTitle"
+    />
+    <button (click)="addSection()" style="margin-left: 1rem">
+      Adăugați
+    </button>
+  </p>
+  
+  <ul>
+      <li *ngFor="let sec of sections">
+          <a [routerLink]="['/sections', sec.id]">
+              
+              <p>
+                {{ sec.title }} {{ sec.subtitle ? ' - ' + sec.subtitle : '' }}
+              </p>
+          </a>
+      </li>
+  </ul>
+</div>
 
-<p>
-  <label for="newSectionTitle">Adăugați titlul unei secțiuni noi: </label>
-  <input
-    id="newSectionTitle"
-    [(ngModel)]="newSectionTitle"
-  />
-  <button (click)="addSection()" style="margin-left: 1rem">
-    Adăugați
-  </button>
-</p>
-
-<ul>
-    <li *ngFor="let sec of sections">
-        <a [routerLink]="['/sections', sec.id]">
-            
-            <p>
-              {{ sec.title }} {{ sec.subtitle ? ' - ' + sec.subtitle : '' }}
-            </p>
-        </a>
-    </li>
-</ul>
