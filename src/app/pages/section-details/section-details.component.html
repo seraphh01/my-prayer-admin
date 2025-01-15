@@ -25,6 +25,7 @@
                 <tr>
                   <td><label>Audio URL:</label></td>
                   <td><input [(ngModel)]="editedAudioUrl" /></td>
+                  <td><input type="file" (change)="onFileSelected($event)"></td>
                 </tr>
                 <tr>
                   <td><label>Durată:</label></td>
@@ -153,11 +154,11 @@
         <tr>
           <td><label for="litTextSelect">Selectați un text liturgic:</label></td>
           <td>
-            <select id="litTextSelect" [(ngModel)]="selectedLitTextId">
+            <select id="litTextSelect" [(ngModel)]="selectedLitTextId" (change)="onLitTextSelected($event)">
               <option value="">-- Alegeți --</option>
               <option value="new" selected>-- Text nou --</option>
               <option *ngFor="let lt of allLitTexts" [value]="lt.id">
-                {{ lt.title }}
+                {{ lt.title }}, {{lt.audio_time ?? 0 | timeFormat}}
               </option>
             </select>
           </td>

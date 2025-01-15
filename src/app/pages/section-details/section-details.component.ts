@@ -16,6 +16,7 @@ import { AudioPlayerComponent } from "./audio-player/audio-player.component";
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { SectionTextElementsService } from '../../core/services/section-text-elements.service';
+import { SupabaseService } from '../../core/services/supabase.service';
 
 
 @Component({
@@ -49,13 +50,16 @@ export class SectionDetailsComponent implements OnInit {
 
   editingSectionText: SectionText | null = null;
 
+  uploadedFile: File | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private sectionsService: SectionsService,
     private sectionTextsService: SectionTextsService,
     private litTextsService: LiturgicalTextsService,
-    private sectionTextElementsService: SectionTextElementsService
+    private sectionTextElementsService: SectionTextElementsService,
+    private supabaseService: SupabaseService
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -122,6 +126,18 @@ export class SectionDetailsComponent implements OnInit {
    */
   async saveSection() {
     if (!this.section) return;
+
+    if(this.uploadedFile) {
+      
+      const path = this.uploadedFile.name;
+      try {
+
+        let result = await this.supabaseService.uploadFile(this.uploadedFile, path);
+        this.editedAudioUrl = result;
+      } catch (error: any) {
+        alert('Eroare la încărcarea fișierului: ' + error.name + ' - ' + error.message);
+      }
+    }
 
     // Gather all changed fields
     const updateData: Partial<Section> = {
@@ -309,5 +325,25 @@ export class SectionDetailsComponent implements OnInit {
    */
   goBack() {
     window.history.back();
+  }
+
+  // Handle file selection
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input?.files?.[0];
+
+    if (file) {
+      this.uploadedFile = file;
+      this.editedAudioUrl = file.name;
+    } else {
+      this.uploadedFile = null;
+    }
+  }
+
+  onLitTextSelected(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    this.selectedLitTextId = select.value;
+    let text = this.allLitTexts.find((lt) => lt.id === this.selectedLitTextId);
+    this.newEndTime = (this.newStartTime ?? 0) + (text?.audio_time ?? 0);
   }
 }

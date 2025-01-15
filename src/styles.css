@@ -10,6 +10,7 @@ button {
     background-color: #790822;
     border: 1px solid black;
     padding: 0.25rem 0.5rem;
+    user-select: none;
 }
 
 body {
@@ -27,7 +28,7 @@ textarea {
     resize: vertical;
 }
 
-input {
+input:not([type="file"]) {
     padding: 0.5rem;
     margin: 8px 0;
     box-sizing: border-box;
@@ -106,5 +107,24 @@ div{
 
 /*except those in the navbar*/
 
-html, body { height: 100%; }
 body {  margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+
+::-webkit-scrollbar {
+    width: 8px;
+    
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #790822;
+    border-radius: 10px;
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: #ffe5ad;
+}
+
+::-webkit-scrollbar-button {
+    display: none;
+}
