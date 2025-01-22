@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
 import { LiturgicalText } from '../../core/models/liturgical-text.model';
-import { TextElement } from '../../core/models/text-element.model';
+import { TextElement, TextElementType } from '../../core/models/text-element.model';
 import { LiturgicalTextsService } from '../../core/services/liturgical-text.service';
 import { TextElementsService } from '../../core/services/text-element.service';
 import { TimeInputDirective } from '../../core/directives/time-input.directive';
@@ -29,7 +29,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
   editedTextElement: TextElement | null = null;
 
   sectionStartTime: number | null = 0;
-
+  textTypes = Object.values(TextElementType);
   textTitle = '';
 
   constructor(
@@ -41,7 +41,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     this.textId = this.route.snapshot.paramMap.get('id') || '';
     this.sectionStartTime = parseInt(this.route.snapshot.paramMap.get('sectionStartTime') || '0');
-    this.newTextElement = {text_id: this.textId} as TextElement;
+    this.newTextElement = {text_id: this.textId, type: TextElementType.PLAIN} as TextElement;
     this.editedTextElement = {} as TextElement;
     await this.loadLiturgicalText();
   }
@@ -110,10 +110,12 @@ export class LiturgicalTextDetailComponent implements OnInit {
         text: trimmedText,
         sequence: maxSeq + 1,
         text_id: this.textId,
+        type: this.newTextElement?.type ?? TextElementType.PLAIN,
+        highlight: this.newTextElement?.highlight ?? false,
         start_time:  (this.newTextElement?.start_time ?? 0) - (this.sectionStartTime ?? 0),
         end_time: (this.newTextElement?.end_time ?? 0)- (this.sectionStartTime ?? 0) ,
       });
-      this.newTextElement = {text_id: this.textId, start_time: this.newTextElement?.end_time, end_time:this.newTextElement?.end_time} as TextElement;
+      this.newTextElement = {text_id: this.textId, start_time: this.newTextElement?.end_time, end_time:this.newTextElement?.end_time, type: TextElementType.PLAIN} as TextElement;
       // Reload elements from DB so they appear at the end
       await this.loadTextElements();
     } catch (error) {

@@ -29,11 +29,21 @@
           <input [(ngModel)]="editedTextElement!.start_time" timeInput/>
           <label for="end_time">Timp sfârșit: </label>
           <input [(ngModel)]="editedTextElement!.end_time" timeInput />
+          <label for="highlight">Evidențiere prima literă: </label>
+          <input [(ngModel)]="editedTextElement!.highlight" id="highlight" type="checkbox" />
+          <label for="type">Tip text: </label>
+          <select [(ngModel)]="editedTextElement!.type">
+            <option *ngFor="let type of textTypes" [value]="type">{{ type }}</option>
+            </select>
           <button (click)="editTextElement(i)"><i class="material-icons" style="font-size:12px" title="Șterge">save</i></button>
           <button (click)="clearEditedTextElement()"><i class="material-icons" style="font-size:12px" title="Șterge">cancel</i></button>
         </p>
           <p *ngIf="!editedTextElement?.id || elem.id != editedTextElement?.id; ">
-            {{ elem.text }} <span *ngIf="elem.start_time != null && elem.end_time != null">{{ (elem.start_time + (sectionStartTime ?? 0)) | timeFormat }} → {{ (elem.end_time + (sectionStartTime ?? 0)) | timeFormat}}</span>
+            <span *ngIf="elem.type == 'Quote'">„</span>
+            <span *ngIf="elem.highlight"><b style="font-size: 24px">{{elem.text[0]}}</b>{{elem.text.slice(1)}}</span>
+            <span *ngIf="!elem.highlight">{{elem.text}}</span>
+            <span *ngIf="elem.type == 'Quote'">”</span>
+             <span *ngIf="elem.start_time != null && elem.end_time != null">{{ (elem.start_time + (sectionStartTime ?? 0)) | timeFormat }} → {{ (elem.end_time + (sectionStartTime ?? 0)) | timeFormat}}</span>
   
             <span style="display: inline; margin-left: 1rem;">
               <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
@@ -58,6 +68,12 @@
     <input [(ngModel)]="newTextElement!.start_time" type="text" timeInput />
     <label for="end_time">Timp sfârșit: </label>
     <input [(ngModel)]="newTextElement!.end_time" type="text" timeInput />
+    <label for="highlight">Evidențiere prima literă: </label>
+    <input [(ngModel)]="newTextElement!.highlight" id="highlight" type="checkbox" />
+    <label for="type">Tip text: </label>
+    <select [(ngModel)]="newTextElement!.type">
+      <option *ngFor="let type of textTypes" [value]="type">{{ type }}</option>
+    </select>
     <br />
     <button (click)="addTextElement()">Adaugă</button>
   </div>
