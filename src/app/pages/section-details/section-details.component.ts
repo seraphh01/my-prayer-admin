@@ -24,7 +24,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
   selector: 'app-section-detail',
   templateUrl: './section-details.component.html',
   styleUrls: ['./section-details.component.css'],
-  imports: [CommonModule, FormsModule, RouterLink, TimeInputDirective, TimePipe, AudioPlayerComponent, MatInputModule, MatFormFieldModule],
+  imports: [CommonModule, FormsModule, RouterLink, TimeInputDirective, TimePipe, MatInputModule, MatFormFieldModule],
 })
 export class SectionDetailsComponent implements OnInit {
   sectionId!: string;
@@ -37,20 +37,23 @@ export class SectionDetailsComponent implements OnInit {
   editedTitle = '';
   editedSubtitle = '';
   editedAudioUrl = '';
-  editedDuration: number | null = null;
   editedImageUrl = '';
+
+  audio = new Audio();
 
   // For adding a new text
   selectedLitTextId = 'new';
   newStartTime: number | null = 0;
   newEndTime: number | null = 0;
   newRepetitions = 1;
-
+  timeOut: any;
   newLiturgicalTextTitle: string = '';
 
   editingSectionText: SectionText | null = null;
-
+  currentTime: number = 0;
   uploadedFile: File | null = null;
+  floor = Math.floor;
+  playingSectionText: SectionText | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -75,10 +78,13 @@ export class SectionDetailsComponent implements OnInit {
   async loadSection() {
     this.section = await this.sectionsService.getById(this.sectionId);
     if (this.section) {
+      this.audio.src = this.section.audio_url;
+      this.audio.ontimeupdate = () => {
+        this.currentTime = this.audio.currentTime;
+      }
       this.editedTitle = this.section.title || '';
       this.editedSubtitle = this.section.subtitle || '';
       this.editedAudioUrl = this.section.audio_url;
-      this.editedDuration = this.section.duration;
       this.editedImageUrl = this.section.image_url || '';
     }
   }
@@ -144,7 +150,6 @@ export class SectionDetailsComponent implements OnInit {
       title: this.editedTitle.trim() || null,
       subtitle: this.editedSubtitle.trim() || null,
       audio_url: this.editedAudioUrl.trim(),
-      duration: this.editedDuration || 0,
       image_url: this.editedImageUrl.trim() || null,
     };
 
@@ -155,7 +160,6 @@ export class SectionDetailsComponent implements OnInit {
         this.section.title = updated.title;
         this.section.subtitle = updated.subtitle;
         this.section.audio_url = updated.audio_url;
-        this.section.duration = updated.duration;
         this.section.image_url = updated.image_url;
 
         alert('Secțiune salvată cu succes!');
@@ -194,16 +198,22 @@ export class SectionDetailsComponent implements OnInit {
         end_time: this.newEndTime ?? null,
       } as Partial<SectionText>);
 
-      // Reset form fields
-      this.newLiturgicalTextTitle = '';
-      this.selectedLitTextId = 'new';
-      this.newStartTime = this.newEndTime;
-      this.newEndTime = null;
-      this.newRepetitions = 1;
+      //retrieve section_text_elements
+      let {data, error} = await this.sectionTextElementsService.client
+      .from('section_text_elements')
+      .select('*, text_element: text_elements(*)')
+      .eq('section_text_id', result.id)
+      .order('sequence', { ascending: true });
+      
+      if (!error){
+        result.section_text_elements = data;
+      }
+
+      this.newStartTime = result.end_time ?? 0;
+      this.newEndTime = (result.end_time?? 0) + 60;
 
       // Reload
       this.sectionTexts.push(result);
-      //await this.loadSectionTexts();
     } catch (error) {
       console.error('Eroare la adăugarea textului:', error);
     }
@@ -270,25 +280,11 @@ export class SectionDetailsComponent implements OnInit {
 
   setEditingSectionText(st: SectionText) {
     this.editingSectionText = JSON.parse(JSON.stringify(st)) as SectionText;
-
-
-    if (!this.editingSectionText.section_text_elements?.length || (this.editingSectionText.section_text_elements?.length !== this.editingSectionText.text?.texts?.length)) {
-      this.editingSectionText.section_text_elements = this.editingSectionText.text?.texts?.map((textElement) =>
-      ({
-        section_text_id: this.editingSectionText!.id,
-        text_element_id: textElement.id,
-        start_time: (textElement.start_time ?? 0) + (this.editingSectionText?.start_time ?? 0),
-        end_time: (textElement.end_time ?? 0) + (this.editingSectionText?.start_time ?? 0),
-        sequence: textElement.sequence,
-        text_element: textElement
-      } as SectionTextElement));
-    } else {
-      this.editingSectionText.section_text_elements?.forEach((ste) => {
-        ste.start_time = (this.editingSectionText?.start_time ?? 0) + ste.start_time;
-        ste.end_time = (this.editingSectionText?.start_time ?? 0) + ste.end_time;
-      });
-    }
-
+    this.editingSectionText.section_text_elements?.forEach((ste) => {
+      ste.start_time = (this.editingSectionText?.start_time ?? 0) + ste.start_time;
+      ste.end_time = (this.editingSectionText?.start_time ?? 0) + ste.end_time;
+    });
+    this.stopPlayingSectionText();
   }
 
   clearEditingSectionText() {
@@ -301,22 +297,19 @@ export class SectionDetailsComponent implements OnInit {
       start_time: this.editingSectionText.start_time,
       end_time: this.editingSectionText.end_time,
       repetition: this.editingSectionText.repetition,
-      use_custom_times: this.editingSectionText.use_custom_times,
     });
 
     let editedSectionText = this.sectionTexts.find((st) => st.id === this.editingSectionText?.id);
 
-    if (this.editingSectionText.use_custom_times) {
-      let bulkUpdateSectionTextElements = this.editingSectionText.section_text_elements?.map((text) => ({ start_time: text.start_time - (this.editingSectionText?.start_time ?? 0), end_time: text.end_time - (this.editingSectionText?.start_time ?? 0), text_element_id: text.text_element_id, section_text_id: text.section_text_id } as SectionTextElement)) ?? [];
-      await this.sectionTextElementsService.bulkUpdate(bulkUpdateSectionTextElements);
+    let bulkUpdateSectionTextElements = this.editingSectionText.section_text_elements?.map((text) => ({ start_time: text.start_time - (this.editingSectionText?.start_time ?? 0), end_time: text.end_time - (this.editingSectionText?.start_time ?? 0), text_element_id: text.text_element_id, section_text_id: text.section_text_id } as SectionTextElement)) ?? [];
+    await this.sectionTextElementsService.bulkUpdate(bulkUpdateSectionTextElements);
 
-      editedSectionText!.section_text_elements = this.editingSectionText.section_text_elements?.map((text) => ({ start_time: text.start_time - (this.editingSectionText?.start_time ?? 0), end_time: text.end_time - (this.editingSectionText?.start_time ?? 0), text_element_id: text.text_element_id, section_text_id: text.section_text_id, text_element: text.text_element } as SectionTextElement)) ?? [];;
-    }
+    editedSectionText!.section_text_elements = this.editingSectionText.section_text_elements?.map((text) => ({ start_time: text.start_time - (this.editingSectionText?.start_time ?? 0), end_time: text.end_time - (this.editingSectionText?.start_time ?? 0), text_element_id: text.text_element_id, section_text_id: text.section_text_id, text_element: text.text_element } as SectionTextElement)) ?? [];;
+  
 
     editedSectionText!.repetition = updatedSectionText.repetition;
     editedSectionText!.start_time = updatedSectionText.start_time;
     editedSectionText!.end_time = updatedSectionText.end_time;
-    editedSectionText!.use_custom_times = updatedSectionText.use_custom_times;
     this.editingSectionText = null;
   }
 
@@ -344,6 +337,127 @@ export class SectionDetailsComponent implements OnInit {
     const select = event.target as HTMLSelectElement;
     this.selectedLitTextId = select.value;
     let text = this.allLitTexts.find((lt) => lt.id === this.selectedLitTextId);
-    this.newEndTime = (this.newStartTime ?? 0) + (text?.audio_time ?? 0);
+    this.newEndTime = (this.newStartTime ?? 0);
+  }
+
+  playAudioPart(start: number, end: number) {
+    
+    if(!this.section || !this.section.audio_url?.length) return;
+
+    if(this.audio.src !== this.section?.audio_url) {
+      this.audio.src = this.section?.audio_url ?? '';
+    }
+
+    if (this.audio.paused || this.audio.currentTime >= end || this.audio.currentTime < start) {
+      clearTimeout(this.timeOut);
+      this.currentTime = start;
+      this.audio.currentTime = start;
+      this.audio.play();
+      this.audio.loop = false;
+          //stop at end
+          this.timeOut  = setTimeout(() => {
+            this.audio.pause();
+          }, (end - start) * 1000);
+      
+    }
+    else {
+      this.audio.pause();
+      clearTimeout(this.timeOut);
+      this.currentTime = 0;
+    }
+  }
+
+  forcePlayAudioPart(start: number, end: number) {
+    clearTimeout(this.timeOut);
+    this.audio.pause();
+    this.audio.currentTime = start;
+    this.audio.play();
+    this.audio.loop = false;
+    //stop at end
+    this.timeOut  = setTimeout(() => {
+      this.currentTime = 0;
+      this.audio.pause();
+      this.playingSectionText = null;
+    }, (end - start) * 1000);
+  }
+
+  playSectionText(st: SectionText) {
+
+    if(this.playingSectionText != null && this.playingSectionText.id === st.id) {
+      if(this.audio.paused) {
+        this.audio.play()
+      } else {
+
+      this.audio.pause();}
+      return;
+    }
+
+    this.playingSectionText = st;
+    
+    this.playAudioPart(st.start_time ?? 0, st.end_time ?? 0);
+
+  }
+
+  pauseSectionText() {
+    this.audio.pause();
+  }
+
+  stopPlayingSectionText() {
+    this.audio.pause();
+    clearTimeout(this.timeOut);
+    this.currentTime = 0;
+    this.playingSectionText = null;
+  }
+
+  onTextElementStartTimeChanged(index: number) {
+    if (!this.editingSectionText) return;
+    let ste = this.editingSectionText.section_text_elements![index];
+
+    if(index === 0) {
+      this.editingSectionText.start_time = ste.start_time;
+    }
+
+    if (index > 0) {
+      let previousTextElement = this.editingSectionText.section_text_elements![index - 1];
+
+
+      previousTextElement.end_time = ste.start_time;
+    }
+
+    if(ste.end_time <= ste.start_time) {
+      ste.end_time = ste.start_time + 60;
+    }
+
+    this.forcePlayAudioPart(ste.start_time, ste.end_time);
+  }
+
+  onTextElementEndTimeChanged(index: number) {
+    if (!this.editingSectionText) return;
+    let ste = this.editingSectionText.section_text_elements![index];
+
+    if(index === this.editingSectionText.section_text_elements!.length - 1) {
+      this.editingSectionText.end_time = ste.end_time;
+    }
+
+    if (index < this.editingSectionText.section_text_elements!.length - 1) {
+      let nextTextElement = this.editingSectionText.section_text_elements![index + 1];
+      nextTextElement.start_time = ste.end_time;
+
+      if(nextTextElement.end_time <= nextTextElement.start_time) {
+        nextTextElement.end_time = nextTextElement.start_time + 60;
+      }
+
+      this.forcePlayAudioPart(nextTextElement.start_time, nextTextElement.end_time);
+    }
+  }
+
+  setEndTimeToCurrentTime(index: number) {
+    if (!this.editingSectionText) return;
+    if (index >= this.editingSectionText.section_text_elements!.length) return;
+    if (index < 0) return;
+
+    let ste = this.editingSectionText.section_text_elements![index];
+    ste.end_time = Math.floor(this.currentTime);
+    this.onTextElementEndTimeChanged(index);
   }
 }

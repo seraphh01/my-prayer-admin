@@ -3,20 +3,17 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-
 import { LiturgicalText } from '../../core/models/liturgical-text.model';
 import { TextElement, TextElementType } from '../../core/models/text-element.model';
 import { LiturgicalTextsService } from '../../core/services/liturgical-text.service';
 import { TextElementsService } from '../../core/services/text-element.service';
-import { TimeInputDirective } from '../../core/directives/time-input.directive';
-import { TimePipe } from '../../core/directives/time.pipe';
 
 @Component({
   standalone: true,
   selector: 'app-liturgical-text-detail',
   templateUrl: './liturgical-text-detail.component.html',
   styleUrls: ['./liturgical-text-detail.component.css'],
-  imports: [CommonModule, FormsModule, TimeInputDirective, TimePipe],
+  imports: [CommonModule, FormsModule],
 })
 export class LiturgicalTextDetailComponent implements OnInit {
   textId!: string;
@@ -52,8 +49,7 @@ export class LiturgicalTextDetailComponent implements OnInit {
   async loadLiturgicalText() {
     this.text = await this.litTextService.getById(this.textId);
     this.textTitle = this.text?.title ?? '';
-    this.newTextElement!.start_time = this.text?.texts?.length ? this.text.texts[this.text.texts.length - 1].end_time! + this.sectionStartTime! : this.sectionStartTime;
-  }
+}
 
   /**
    * Loads text elements separately (sorted by sequence).
@@ -80,7 +76,6 @@ export class LiturgicalTextDetailComponent implements OnInit {
     try {
       const updated = await this.litTextService.update(this.text.id, {
         title: this.text.title ?? null,
-        audio_time: this.text.audio_time,
       });
       if (updated) {
         alert('Textul a fost salvat!');
@@ -112,10 +107,8 @@ export class LiturgicalTextDetailComponent implements OnInit {
         text_id: this.textId,
         type: this.newTextElement?.type ?? TextElementType.PLAIN,
         highlight: this.newTextElement?.highlight ?? false,
-        start_time:  (this.newTextElement?.start_time ?? 0) - (this.sectionStartTime ?? 0),
-        end_time: (this.newTextElement?.end_time ?? 0)- (this.sectionStartTime ?? 0) ,
       });
-      this.newTextElement = {text_id: this.textId, start_time: this.newTextElement?.end_time, end_time:this.newTextElement?.end_time, type: TextElementType.PLAIN} as TextElement;
+      this.newTextElement = {text_id: this.textId, type: TextElementType.PLAIN} as TextElement;
       // Reload elements from DB so they appear at the end
       await this.loadTextElements();
     } catch (error) {
@@ -150,17 +143,13 @@ export class LiturgicalTextDetailComponent implements OnInit {
       await this.textElementsService.delete(id);
       // Remove from local array so the UI updates immediately
       this.text?.texts?.splice(index, 1);
-      this.newTextElement!.start_time = this.text?.texts?.length ? (this.text.texts[this.text.texts.length - 1].end_time ?? 0) + (this.sectionStartTime ?? 0) : 0;
-      this.newTextElement!.end_time = this.text?.texts?.length ? (this.text.texts[this.text.texts.length - 1].end_time ?? 0) + (this.sectionStartTime ?? 0) : 0;
-    } catch (error) {
+} catch (error) {
       console.error('Error deleting text element:', error);
     }
   }
 
   setEditedTextElement(te: TextElement) {
     this.editedTextElement = { ...te };
-    this.editedTextElement.start_time! += this.sectionStartTime ?? 0;
-    this.editedTextElement.end_time! += this.sectionStartTime ?? 0;
   }
 
   clearEditedTextElement() {
@@ -170,8 +159,6 @@ export class LiturgicalTextDetailComponent implements OnInit {
   async editTextElement(index: number) {
     if (!this.editedTextElement?.id || !this.editedTextElement.text) return;
     try {
-      this.editedTextElement.start_time! -= this.sectionStartTime ?? 0;
-      this.editedTextElement.end_time! -= this.sectionStartTime ?? 0;
       await this.textElementsService.update(this.editedTextElement.id, { ...this.editedTextElement });
       // Update local array so the UI updates immediately
       this.text?.texts?.splice(index, 1, { ...this.editedTextElement });

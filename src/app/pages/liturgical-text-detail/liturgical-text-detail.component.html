@@ -8,9 +8,6 @@
       Schimbă titlul:
       <input [(ngModel)]="text.title" style="width: fit-content" />
       <br>
-      Durata audio:
-      <input [(ngModel)]="text.audio_time" style="width: fit-content" timeInput />
-      <br>
       <button (click)="saveTitle()">Salvează</button>
     </p>
 </div>
@@ -18,17 +15,12 @@
   <hr />
   <div>
     <h3>Texte</h3>
-    <label for="section_start_time">Timp început în secțiune(orientativ): </label>
-    <input [(ngModel)]="sectionStartTime" type="text" timeInput />
     <p *ngIf="!text?.texts?.length">Nu sunt texte adăugate</p>
   <ol>
       <li *ngFor="let elem of text?.texts; let i = index">
         <p *ngIf="editedTextElement?.id && elem.id == editedTextElement?.id; ">
           <textarea [(ngModel)]="editedTextElement!.text" rows="4" style="width:100%" ></textarea>
-          <label for="start_time">Timp început: </label>
-          <input [(ngModel)]="editedTextElement!.start_time" timeInput/>
-          <label for="end_time">Timp sfârșit: </label>
-          <input [(ngModel)]="editedTextElement!.end_time" timeInput />
+
           <label for="highlight">Evidențiere prima literă: </label>
           <input [(ngModel)]="editedTextElement!.highlight" id="highlight" type="checkbox" />
           <label for="type">Tip text: </label>
@@ -43,8 +35,7 @@
             <span *ngIf="elem.highlight"><b style="font-size: 24px">{{elem.text[0]}}</b>{{elem.text.slice(1)}}</span>
             <span *ngIf="!elem.highlight">{{elem.text}}</span>
             <span *ngIf="elem.type == 'Quote'">”</span>
-             <span *ngIf="elem.start_time != null && elem.end_time != null">{{ (elem.start_time + (sectionStartTime ?? 0)) | timeFormat }} → {{ (elem.end_time + (sectionStartTime ?? 0)) | timeFormat}}</span>
-  
+
             <span style="display: inline; margin-left: 1rem;">
               <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
               <button (click)="moveDown(i)" [disabled]="i === text?.texts!.length - 1" title="Mută în jos">↓</button>
@@ -63,11 +54,6 @@
     <h4>Adaugă un text nou</h4>
     <label for="text">Text:</label>
     <textarea id="text" [(ngModel)]="newTextElement!.text" rows="4" style="width:100%" ></textarea>
-
-    <label for="start_time">Timp început: </label>
-    <input [(ngModel)]="newTextElement!.start_time" type="text" timeInput />
-    <label for="end_time">Timp sfârșit: </label>
-    <input [(ngModel)]="newTextElement!.end_time" type="text" timeInput />
     <label for="highlight">Evidențiere prima literă: </label>
     <input [(ngModel)]="newTextElement!.highlight" id="highlight" type="checkbox" />
     <label for="type">Tip text: </label>

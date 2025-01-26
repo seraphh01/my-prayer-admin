@@ -103,4 +103,34 @@ export abstract class SupabaseTableService<T extends { id?: string | number }> {
     if (error || !data) throw error;
     return data as T[];
   }
+
+  /**
+   * Get paginated
+   */
+  async getPaginated(page: number, perPage: number, filters: {field: string, operator: string, value: any}[]): Promise<T[]> {
+
+    let query = this.client.from(this.tableName).select('*');
+
+    for(let filter of filters) {
+      query.filter(filter.field, filter.operator, filter.value);
+    }
+
+    const { data, error } = await query
+      .range((page - 1) * perPage, page * perPage - 1);
+
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  /**
+   * Get the total number of records in the table.
+   */
+  async count(): Promise<number> {
+    const { data, error } = await this.client
+      .from(this.tableName)
+      .select('id', { count: 'exact' });
+
+    if (error) throw error;
+    return data?.length ?? 0;
+  }
 }

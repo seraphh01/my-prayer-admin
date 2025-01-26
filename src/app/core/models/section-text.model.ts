@@ -12,7 +12,6 @@ export interface SectionText {
     end_time: number | null;
     text?: LiturgicalText | null;
     section_text_elements?: SectionTextElement[] | null;
-    use_custom_times: boolean;
   }
   
 

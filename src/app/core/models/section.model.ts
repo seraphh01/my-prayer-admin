@@ -6,7 +6,6 @@ export interface Section {
     title: string | null;
     audio_url: string;
     subtitle: string | null;
-    duration: number;
     image_url: string | null;
     texts: SectionText[] | null;
   }

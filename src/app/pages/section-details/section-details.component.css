@@ -8,3 +8,11 @@
     margin: 10px;
     gap: 1rem;
 }
+
+.highlight {
+    font-weight: bold;
+}
+
+.sections-texts {
+    list-style-type: upper-roman!important;
+}

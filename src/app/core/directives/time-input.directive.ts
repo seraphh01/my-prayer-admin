@@ -1,7 +1,9 @@
 import {
     Directive,
     ElementRef,
+    EventEmitter,
     HostListener,
+    Output,
     Renderer2,
     forwardRef,
   } from '@angular/core';
@@ -22,6 +24,7 @@ import {
   
     private onChange: (value: any) => void = () => {};
     private onTouched: () => void = () => {};
+    @Output() timeBlur = new EventEmitter<number>();
   
     constructor(private el: ElementRef, private renderer: Renderer2) {
 
@@ -32,13 +35,6 @@ import {
           );
     }
   
-    // @HostListener('input', ['$event.target.value'])
-    // onInput(value: string): void {
-    //   // Validate and format the input value immediately for display purposes
-    //   const formattedValue = this.formatValue(value);
-    //   this.renderer.setProperty(this.el.nativeElement, 'value', formattedValue);
-    // }
-  
     @HostListener('blur', ['$event.target.value'])
     onBlur(value: string): void {
       // On blur, parse the input and update the model
@@ -46,6 +42,8 @@ import {
       this.onChange(this._value);
       this.onTouched();
   
+      this.timeBlur.emit(this._value);
+
       // Reformat the input field after updating the model
       const formattedValue = this.formatValue(value);
       this.renderer.setProperty(this.el.nativeElement, 'value', formattedValue);

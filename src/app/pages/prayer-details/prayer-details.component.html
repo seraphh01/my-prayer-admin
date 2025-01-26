@@ -41,8 +41,8 @@
       <ul>
         <li *ngFor="let prayerSection of prayer?.sections; let i = index">
           <p>
-            <a [routerLink]="['/sections', prayerSection.section?.id]">{{ prayerSection.section?.title }} {{ prayerSection.section?.subtitle?.length ? '-' + prayerSection.section?.subtitle : ''}}</a>
-            
+            <a [routerLink]="['/sections', prayerSection.section?.id]">{{ prayerSection.section?.title }} {{ prayerSection.section?.subtitle?.length ? '- ' + prayerSection.section?.subtitle : ''}}</a>
+            <span>{{" "}}</span>
             <button (click)="deleteSection(prayerSection.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
             <button (click)="displayNewSubsectionForm(prayerSection.id)"><i class="material-icons" style="font-size: 12px">add</i></button>
           </p>
@@ -83,6 +83,7 @@
       <button (click)="addPrayerSection()">Adaugă</button>
       <h4>Creeaza și adaugă o secțiune nouă</h4>
       <input [(ngModel)]="newSectionTitle" placeholder="Titlu" />
+      <input [(ngModel)]="newSectionSubtitle" placeholder="Subtitlu" />
       <button (click)="addNewPrayerSection()">Adaugă</button>
     </div>
 </div>

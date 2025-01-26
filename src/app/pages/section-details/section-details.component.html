@@ -28,10 +28,6 @@
                   <td><input type="file" (change)="onFileSelected($event)"></td>
                 </tr>
                 <tr>
-                  <td><label>Durată:</label></td>
-                  <td><input [(ngModel)]="editedDuration" type="text" timeInput /></td>
-                </tr>
-                <tr>
                   <td><label>URL Imagine:</label></td>
                   <td><input [(ngModel)]="editedImageUrl" /></td>
                 </tr>
@@ -67,16 +63,13 @@
             <div style="display: flex;">
               <ng-container *ngIf="editingSectionText === null || editingSectionText.id !== st.id;">
                 <h4 *ngIf="allLitTexts && allLitTexts.length">
-                  {{i + 1 }}.
+                  {{i + 1}}.
                   {{ st?.repetition! > 1 ? st.repetition + ' x' : ''}}
-                  <a [routerLink]="['/liturgicalTexts', st.liturgical_text_id, st.start_time]">
+                  <a [routerLink]="['/liturgicalTexts', st.liturgical_text_id]">
                      {{ st?.text?.title?.length ? st?.text?.title : 'Fără Titlu' }},
                   </a>
                   <span style="margin-left: 10px;">
                     {{ st.start_time ?? 0 | timeFormat}} → {{ st.end_time ?? 0 | timeFormat }}
-                  </span>
-                  <span *ngIf="st.use_custom_times" style="margin-left: 10px;">
-                    <label> Intervale de timp personalizate</label>
                   </span>
                 </h4>
 
@@ -93,14 +86,10 @@
                   →
                   <input id="endTime" type="text" [(ngModel)]="editingSectionText.end_time" timeInput style="width: 60px;" />
                 </span>
-                <span style="align-content: center; margin-left: 10px;">
-                  <input type="checkbox" id="customTimesInput" [(ngModel)]="editingSectionText.use_custom_times" />
-                  <label for="customTimesInput">Intervale de timp personalizate</label>
-                </span>
               </ng-container>
             </div>
             <div style="display: flex; justify-content: center; align-items: center;">
-              <div *ngIf="editingSectionText === null || editingSectionText.id !== st.id;">
+              <div *ngIf="editingSectionText === null" style="display: flex; gap: 0.1rem">
                 <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
                 <button (click)="moveDown(i)" [disabled]="i === sectionTexts.length - 1" title="Mută în jos">↓</button>
                 <button (click)="deleteSectionText(st, i)">
@@ -109,37 +98,88 @@
                 <button (click)="setEditingSectionText(st)">
                   <i class="material-icons" style="font-size:12px" title="Editează">edit</i>
                 </button>
+                <button *ngIf="playingSectionText == null || playingSectionText.id !== st.id || (playingSectionText.id === st.id && audio.paused)" (click)="playSectionText(st)">
+                  <i class="material-icons" style="font-size:12px" title="Play">play_arrow</i>
+                </button>
+                <button *ngIf="!audio.paused && playingSectionText !== null && playingSectionText.id === st.id" (click)="pauseSectionText()">
+                  <i class="material-icons" style="font-size:12px" title="Play">pause</i>
+                </button>
+                <button *ngIf="playingSectionText !== null && playingSectionText.id === st.id"(click)="stopPlayingSectionText()">
+                  <i class="material-icons" style="font-size:12px" title="Play">stop</i>
+                </button>
               </div>
-              <div *ngIf="editingSectionText !== null && editingSectionText.id === st.id;">
+              <div *ngIf="editingSectionText !== null && editingSectionText.id === st.id;" style="display: flex; gap: 0.1rem">
                 <button (click)="saveEditedSectionText()">
                   <i class="material-icons" style="font-size:12px" title="Salveaza">save</i></button>
                 <button (click)="clearEditingSectionText()"><i class="material-icons" style="font-size:12px"
                     title="Renunță">cancel</i></button>
+                    
+                    <span>{{floor(currentTime) | timeFormat}}</span>
                 </div>
             </div>
           </div>
 
           <ng-container *ngIf="editingSectionText !== null && editingSectionText.id === st.id;">
-            <div *ngIf="editingSectionText.use_custom_times" style="width: 800px;">
+            <div style="width: 800px;">
               <ol>
+
+                <p *ngIf="!editingSectionText.section_text_elements?.length">Nu există texte adăugate</p>
                 <li *ngFor="let section_text_element of editingSectionText.section_text_elements; let i = index">
-                  <div>{{ section_text_element.text_element.text }} 
-                    <div style="width: fit-content; display: inline-block;"><input type="text" [(ngModel)]="section_text_element.start_time" timeInput style="width: 60px;" />
-                      → 
-                      <input type="text" [(ngModel)]="section_text_element.end_time" timeInput style="width: 60px;" /></div>
+                  <div style="display: flex; flex-direction: row; justify-content: center; align-items: end;">
+
+                    <div style="width: 800px;min-height: 64px">{{ section_text_element.text_element.text }}
                     </div>
+                    <div style="width:400px; ">
+                       <input (timeBlur)="onTextElementStartTimeChanged(i)" type="text" [(ngModel)]="section_text_element.start_time" timeInput style="width: 60px;" />
+                       → 
+                       <input [disabled]="i < editingSectionText.section_text_elements!.length - 1" (timeBlur)="onTextElementEndTimeChanged(i)" type="text" [(ngModel)]="section_text_element.end_time" timeInput style="width: 60px;" />
+
+                        <span>{{" "}}</span>
+                       
+                       <button (click)="playAudioPart(section_text_element.start_time, section_text_element.end_time)">
+                         <i *ngIf="!audio.paused && audio.currentTime >= section_text_element.start_time && audio.currentTime < section_text_element.end_time" class="material-icons" style="font-size:12px" title="Play">pause</i>
+                         <i *ngIf="audio.paused || (audio.currentTime >= section_text_element.end_time || audio.currentTime < section_text_element.start_time)" class="material-icons" style="font-size:12px" title="Play">play_arrow</i>
+                       </button>
+                       <button *ngIf="!audio.paused && audio.currentTime >= section_text_element.start_time && audio.currentTime < section_text_element.end_time"  (click)="setEndTimeToCurrentTime(i)">
+                         <i class="material-icons" style="font-size:12px" title="Play">timer</i>
+                        </button>
+                       
+                     </div>
+
+                  </div>
+
                 </li>
               </ol>
             </div>
-            <div *ngIf="!editingSectionText.use_custom_times" style="width: 800px;">
-              <ol>
-                <li *ngFor="let text_element of editingSectionText.text?.texts; let i = index">
-                  <span>{{ text_element.text }} {{ (st.start_time ?? 0) + (text_element.start_time ?? 0) | timeFormat }} → {{ (st.start_time ?? 0) + (text_element.end_time ?? 0) |timeFormat }}</span>
-  
-                </li>
-              </ol>
-            </div>
+
           </ng-container>
+          <ng-container >
+            <div *ngIf="editingSectionText == null || editingSectionText.id !== st.id;"style="width: 800px;">
+              <ol>
+                <p *ngIf="!st.section_text_elements?.length">Nu există texte adăugate</p>
+                <li *ngFor="let section_text_element of st.section_text_elements; let i = index">
+                  <div *ngIf="(!audio.paused || (playingSectionText != null && playingSectionText.id === st.id)) && (st.start_time! + section_text_element.start_time <= currentTime) && (st.start_time! +  section_text_element.end_time > currentTime)">
+                    <b>
+                      {{ section_text_element.text_element.text }}
+                      <span>{{((st.start_time ?? 0 )+ section_text_element.start_time) | timeFormat}}</span>
+                      → 
+                      <span>{{((st.start_time ?? 0) + section_text_element.end_time) | timeFormat}}</span>
+                    </b>
+                  </div>
+                  <div *ngIf="(audio.paused && (playingSectionText == null || playingSectionText.id !== st.id)) || (st.start_time! + section_text_element.start_time > currentTime) || (st.start_time! +  section_text_element.end_time < currentTime)">
+                
+                      {{ section_text_element.text_element.text }}
+                      <span>{{((st.start_time ?? 0 )+ section_text_element.start_time) | timeFormat}}</span>
+                      → 
+                      <span>{{((st.start_time ?? 0) + section_text_element.end_time) | timeFormat}}</span>
+                 
+                  </div>
+                </li>
+              </ol>
+            </div>
+
+          </ng-container>
+          
 
         </li>
       </ol>
@@ -158,7 +198,7 @@
               <option value="">-- Alegeți --</option>
               <option value="new" selected>-- Text nou --</option>
               <option *ngFor="let lt of allLitTexts" [value]="lt.id">
-                {{ lt.title }}, {{lt.audio_time ?? 0 | timeFormat}}
+                {{ lt.title }}
               </option>
             </select>
           </td>

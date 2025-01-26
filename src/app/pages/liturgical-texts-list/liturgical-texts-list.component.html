@@ -2,14 +2,13 @@
 
 <div style="margin-bottom: 1rem;">
   <h2>Texte liturgice</h2>
-  <label>Adaugă un text nou: </label>
-    <input
-      type="text"
-      [(ngModel)]="newLiturgicalTextName"
-      placeholder="Text liturgic nou"
-    />
-    <button (click)="addLitirgucalText()" style="margin-left: 1rem">Adaugă</button>
-  </div>
+
+  <label>Caută după titlu: </label>
+  <input
+    type="text"
+    (input)="searchByTitle()"
+    [(ngModel)]="searchText"
+    placeholder="Caută după titlu" >
 
 <ul>
   <li *ngFor="let lt of liturgicalTexts">
@@ -18,3 +17,25 @@
     </a>
   </li>
 </ul>
+
+<p>
+  <span>Pagina {{currentPage}}/{{totalPages}}, Rugăciuni per pagină: </span>
+  <select [(ngModel)]="pageSize" (change)="changedPageSize()">
+    <option *ngFor="let size of [10, 15, 25]" [value]="size">{{size}}</option>
+  </select>
+  <button (click)="previousPage()" [disabled]="currentPage === 1"><i class="material-icons" style="font-size:12px" title="Șterge">arrow_left</i></button>
+  <button (click)="nextPage()" [disabled]="currentPage === totalPages"><i class="material-icons" style="font-size:12px" title="Șterge">arrow_right</i></button>
+
+
+</p>
+
+
+
+  <label>Adaugă un text nou: </label>
+    <input
+      type="text"
+      [(ngModel)]="newLiturgicalTextName"
+      placeholder="Text liturgic nou"
+    />
+    <button (click)="addLitirgucalText()" style="margin-left: 1rem">Adaugă</button>
+  </div>

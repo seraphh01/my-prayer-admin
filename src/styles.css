@@ -35,6 +35,14 @@ input:not([type="file"]) {
     border: 2px solid #790822;
     border-radius: 4px;
     background-color: #ffe5ad;
+
+
+}
+
+input[disabled=true] {
+    background-color: #ffe5ad;
+    pointer-events: none;
+    cursor: not-allowed;
 }
 
 select {
