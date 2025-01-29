@@ -104,6 +104,8 @@ export abstract class SupabaseTableService<T extends { id?: string | number }> {
     return data as T[];
   }
 
+
+
   /**
    * Get paginated
    */
