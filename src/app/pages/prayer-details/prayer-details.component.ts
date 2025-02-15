@@ -141,8 +141,10 @@ export class PrayerDetailComponent implements OnInit {
   addNewPrayerSection(parent_id: string | null = null) {
     if (!this.newSectionTitle) return;
 
+    const nextSequence = this.prayer?.sections?.length ? Math.max(...this.prayer.sections.map((section) => section.sequence)) + 1 : 1;
+    
     this.sectionsService.create({title: this.newSectionTitle, subtitle: this.newSectionSubtitle,audio_url: ''}).then((section) => {
-      this.newPrayerSection = {prayer_id: this.id, section_id: section.id, sequence: 1} as PrayerSection;
+      this.newPrayerSection = {prayer_id: this.id, section_id: section.id, sequence: nextSequence} as PrayerSection;
       this.addPrayerSection(parent_id);
       this.newSectionTitle = '';
     }).catch((error) => {
@@ -179,5 +181,35 @@ export class PrayerDetailComponent implements OnInit {
     }).catch((error) => {
       alert('Error creating date group: ' + error);
     });
+  }
+
+  moveSectionUp(sectionIndex: number) {
+    if (!this.prayer) return;
+    if (sectionIndex === 0) return;
+
+    this.swapSections(sectionIndex, sectionIndex - 1);
+  }
+
+  moveSectionDown(sectionIndex: number) {
+    if (!this.prayer) return;
+    if (sectionIndex === this.prayer.sections!.length - 1) return;
+
+    this.swapSections(sectionIndex, sectionIndex + 1);
+  }
+
+  swapSections(index1: number, index2: number) {
+    if (!this.prayer) return;
+    const section1 = this.prayer.sections![index1];
+    const section2 = this.prayer.sections![index2];
+
+    const temp = section1.sequence;
+    section1.sequence = section2.sequence;
+    section2.sequence = temp;
+
+    this.prayerSectionService.update(section1.id, {sequence: section1.sequence});
+    this.prayerSectionService.update(section2.id, {sequence: section2.sequence});
+
+    this.prayer.sections![index1] = section2;
+    this.prayer.sections![index2] = section1;
   }
 }

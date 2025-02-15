@@ -44,6 +44,9 @@
             <a [routerLink]="['/sections', prayerSection.section?.id]">{{ prayerSection.section?.title }} {{ prayerSection.section?.subtitle?.length ? '- ' + prayerSection.section?.subtitle : ''}}</a>
             <span>{{" "}}</span>
             <button (click)="deleteSection(prayerSection.id)"><i class="material-icons" style="font-size: 12px">delete</i></button>
+
+            <button (click)="moveSectionUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
+            <button (click)="moveSectionDown(i)" [disabled]="i === prayer?.sections?.length" title="Mută în jos">↓</button>
             <button (click)="displayNewSubsectionForm(prayerSection.id)"><i class="material-icons" style="font-size: 12px">add</i></button>
           </p>
           <ul>
@@ -84,7 +87,7 @@
       <h4>Creeaza și adaugă o secțiune nouă</h4>
       <input [(ngModel)]="newSectionTitle" placeholder="Titlu" />
       <input [(ngModel)]="newSectionSubtitle" placeholder="Subtitlu" />
-      <button (click)="addNewPrayerSection()">Adaugă</button>
+      <button (click)="addNewPrayerSection()" (submit)="addNewPrayerSection()">Adaugă</button>
     </div>
 </div>
     <hr>

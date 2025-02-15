@@ -16,20 +16,34 @@
             <table class="section-edit-fields" style="border-collapse: collapse; ">
                 <tr>
                   <td><label>Titlu:</label></td>
-                  <td><input [(ngModel)]="editedTitle" /></td>
+                  <td><input [(ngModel)]="editedSection.title" />
+                    &nbsp;
+                  <button (click)="toggleShowTitle()">
+                    <i *ngIf="editedSection.show_title" class="material-icons" style="font-size:12px" title="Afiseaza titlul">visibility</i>
+                    <i *ngIf="!editedSection.show_title" class="material-icons" style="font-size:12px" title="Ascunde titlul">visibility_off</i>
+                  </button>
+                  </td>
                 </tr>
                 <tr>
                   <td><label>Subtitlu:</label></td>
-                  <td><input [(ngModel)]="editedSubtitle" /></td>
+                  <td><input [(ngModel)]="editedSection.subtitle" />
+                    &nbsp;
+                    <button (click)="toggleShowSubtitle()">
+                      <i *ngIf="editedSection.show_subtitle" class="material-icons" style="font-size:12px" title="Afiseaza subtitlul">visibility</i>
+                      <i *ngIf="!editedSection.show_subtitle" class="material-icons" style="font-size:12px" title="Ascunde subtitlul">visibility_off</i>
+                    </button>
+                  
+                  </td>
+
                 </tr>
                 <tr>
                   <td><label>Audio URL:</label></td>
-                  <td><input [(ngModel)]="editedAudioUrl" /></td>
+                  <td><input [(ngModel)]="editedSection.audio_url" /></td>
                   <td><input type="file" (change)="onFileSelected($event)"></td>
                 </tr>
                 <tr>
                   <td><label>URL Imagine:</label></td>
-                  <td><input [(ngModel)]="editedImageUrl" /></td>
+                  <td><input [(ngModel)]="editedSection.image_url" /></td>
                 </tr>
                 <tr>
                   <td colspan="2" style="text-align: left;">
@@ -87,6 +101,10 @@
                   <span style="margin-left: 10px;">
                     {{ st.start_time ?? 0 | timeFormat}} → {{ st.end_time ?? 0 | timeFormat }}
                   </span>
+                  <span style="margin-left: 10px;">
+                    {{st.italic ? 'Italic' : 'Normal'}}
+                  </span>
+
                 </h4>
 
               </ng-container>
@@ -102,6 +120,15 @@
                   →
                   <input id="endTime" type="text" [(ngModel)]="getEditingSectionText(st.id)!.end_time" timeInput style="width: 60px;" />
                 </span>
+                <div style="height: 48px; display: flex; align-items: center; gap: 0.5rem">
+                  <span>Stil: </span>
+                  <button (click)="toggleSectionTextItalic(st.id)">
+                    <span *ngIf="!getEditingSectionText(st.id)?.italic">Normal</span>
+                    <span *ngIf="getEditingSectionText(st.id)?.italic">Italic</span>
+                  </button>
+
+                </div>
+
               </ng-container>
             </div>
             <div style="display: flex; justify-content: center; align-items: center;">
@@ -129,7 +156,7 @@
                   <i class="material-icons" style="font-size:12px" title="Salveaza">save</i></button>
                 <button (click)="removeEditingSectionText(st.id)"><i class="material-icons" style="font-size:12px"
                     title="Renunță">cancel</i></button>
-                    
+
                 </div>
             </div>
           </div>

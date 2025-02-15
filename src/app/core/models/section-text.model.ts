@@ -11,6 +11,7 @@ export interface SectionText {
     start_time: number | null;
     end_time: number | null;
     text?: LiturgicalText | null;
+    italic: boolean;
     section_text_elements?: SectionTextElement[] | null;
   }
   

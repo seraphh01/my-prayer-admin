@@ -36,11 +36,7 @@ export class SectionDetailsComponent implements OnInit {
   textTypes = Object.values(TextElementType);
   allLitTexts: LiturgicalText[] = []; // Loaded for adding new texts
 
-  // Editable fields for the section
-  editedTitle = '';
-  editedSubtitle = '';
-  editedAudioUrl = '';
-  editedImageUrl = '';
+  editedSection: Partial<Section> = {};
 
   audio = new Audio();
 
@@ -88,10 +84,8 @@ export class SectionDetailsComponent implements OnInit {
       this.audio.ontimeupdate = () => {
         this.currentTime = this.audio.currentTime;
       }
-      this.editedTitle = this.section.title || '';
-      this.editedSubtitle = this.section.subtitle || '';
-      this.editedAudioUrl = this.section.audio_url;
-      this.editedImageUrl = this.section.image_url || '';
+
+      this.editedSection = { ...this.section };
     }
   }
 
@@ -145,23 +139,19 @@ export class SectionDetailsComponent implements OnInit {
       try {
 
         let result = await this.supabaseService.uploadFile(this.uploadedFile, path);
-        this.editedAudioUrl = result;
+        this.editedSection.audio_url = result;
       } catch (error: any) {
         alert('Eroare la încărcarea fișierului: ' + error.name + ' - ' + error.message);
-        this.editedAudioUrl = "";
+        this.editedSection.audio_url = "";
       }
     }
 
-    // Gather all changed fields
-    const updateData: Partial<Section> = {
-      title: this.editedTitle.trim() || null,
-      subtitle: this.editedSubtitle.trim() || null,
-      audio_url: this.editedAudioUrl.trim(),
-      image_url: this.editedImageUrl.trim() || null,
-    };
+    this.editedSection.texts = null; // Don't send this field
+    //remove the texts field from the section
+    delete this.editedSection.texts;
 
     try {
-      const updated = await this.sectionsService.update(this.section.id, updateData);
+      const updated = await this.sectionsService.update(this.section.id, this.editedSection);
       if (updated) {
         // Update local data to reflect changes
         this.section.title = updated.title;
@@ -329,6 +319,7 @@ export class SectionDetailsComponent implements OnInit {
       start_time: editingSectionText.start_time,
       end_time: editingSectionText.end_time,
       repetition: editingSectionText.repetition,
+      italic: editingSectionText.italic,
     });
 
     let editedSectionText = this.sectionTexts.find((st) => st.id === editingSectionText?.id);
@@ -358,6 +349,7 @@ export class SectionDetailsComponent implements OnInit {
         start_time: editingSectionText.start_time,
         end_time: editingSectionText.end_time,
         repetition: editingSectionText.repetition,
+        italic: editingSectionText.italic,
       });
 
       let editedSectionText = this.sectionTexts.find((st) => st.id === editingSectionText?.id);
@@ -394,7 +386,7 @@ export class SectionDetailsComponent implements OnInit {
 
     if (file) {
       this.uploadedFile = file;
-      this.editedAudioUrl = file.name;
+      this.editedSection.audio_url = file.name;
     } else {
       this.uploadedFile = null;
     }
@@ -590,5 +582,20 @@ export class SectionDetailsComponent implements OnInit {
     if (!editingSectionText) return;
 
     editingSectionText.section_text_elements?.splice(textElementIndex, 1);
+  }
+
+  toggleShowTitle() {
+    this.editedSection.show_title = !this.editedSection.show_title;
+  }
+
+  toggleShowSubtitle() {
+    this.editedSection.show_subtitle = !this.editedSection.show_subtitle;
+  }
+
+  toggleSectionTextItalic(sectionTextId: number) {
+    let editingSectionText = this.getEditingSectionText(sectionTextId);
+    if (!editingSectionText) return;
+
+    editingSectionText.italic = !editingSectionText.italic;
   }
 }
