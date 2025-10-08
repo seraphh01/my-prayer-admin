@@ -26,15 +26,21 @@
           <label for="type">Tip text: </label>
           <select [(ngModel)]="editedTextElement!.type">
             <option *ngFor="let type of textTypes" [value]="type">{{ type }}</option>
-            </select>
+          </select>
+          <span *ngIf="editedTextElement!.type == 'quoteText'">
+            <label for="quote_source">Sursa citat</label>
+            <input [(ngModel)]="editedTextElement!.quote_source" id="quote_source" />
+          </span>
+
           <button (click)="editTextElement(i)"><i class="material-icons" style="font-size:12px" title="Șterge">save</i></button>
           <button (click)="clearEditedTextElement()"><i class="material-icons" style="font-size:12px" title="Șterge">cancel</i></button>
         </p>
           <p *ngIf="!editedTextElement?.id || elem.id != editedTextElement?.id; ">
-            <span *ngIf="elem.type == 'Quote'">„</span>
-            <span *ngIf="elem.highlight"><b style="font-size: 24px">{{elem.text[0]}}</b>{{elem.text.slice(1)}}</span>
-            <span *ngIf="!elem.highlight">{{elem.text}}</span>
-            <span *ngIf="elem.type == 'Quote'">”</span>
+
+            <span *ngIf="elem.type == 'quoteText'"><<</span>
+            <span *ngIf="elem.highlight" class="{{elem.type}}"><b style="font-size: 24px">{{elem.text[0]}}</b>{{elem.text.slice(1)}}</span>
+            <span *ngIf="!elem.highlight" class="{{elem.type}}">{{elem.text}}</span>
+            <span *ngIf="elem.type == 'quoteText'">>> {{elem.quote_source}}</span>
 
             <span style="display: inline; margin-left: 1rem;">
               <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>

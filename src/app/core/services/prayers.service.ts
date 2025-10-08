@@ -37,7 +37,7 @@ export class PrayersService extends SupabaseTableService<Prayer> {
   }
 
   async getParyerWithSectionsRecursively(request_prayer_id: string | number): Promise<Prayer | null> {
-    const { data, error } = await this.client.rpc('get_prayer_with_sections_recursive', { request_prayer_id });
+    const { data, error } = await this.client.functions.invoke('prayer-cache?rpc=get_prayer_with_sections_recursive', {method: 'POST', body: {request_prayer_id}});
     if (error) throw error;
     return data;
   }

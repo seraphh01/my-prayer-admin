@@ -6,9 +6,12 @@ export interface TextElement {
     text_id: string | null; // references liturgical_texts (id)
     highlight: boolean;
     type: string;
+    quote_source: string | null;
   }
 
 export enum TextElementType {
-    PLAIN = 'PlainText',
-    QUOTE = 'Quote',
+    PLAIN = 'plainText',
+    QUOTE = 'quoteText',
+    ITALIC = 'italicText',
+    BOLD = 'boldText',
 }

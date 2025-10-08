@@ -29,7 +29,7 @@ export class PrayerTypeService extends SupabaseTableService<PrayerType> {
 
   async getTree(): Promise<PrayerType[]> {
     const { data, error } = await this.supabase.client
-      .rpc('get_prayer_types'); // Name of your function in DB
+      .functions.invoke('prayer-cache?rpc=get_prayer_types', { method: 'POST', body: {}}); // Name of your function in DB
 
     if (error) {
       console.error('Error calling get_prayer_types:', error);
