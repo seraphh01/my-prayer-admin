@@ -187,6 +187,7 @@ export class SectionDetailsComponent implements OnInit {
         await this.textElementsService.bulkUpdate(this.newLiturgicalText.texts);
         this.newSectionText.liturgical_text_id = newLitText.id;
         this.newLiturgicalText = { texts: [] } as any;
+          this.addTextElementToNewLiturgicalText();
       }
 
       let result = await this.sectionTextsService.create({
@@ -211,6 +212,7 @@ export class SectionDetailsComponent implements OnInit {
 
       this.newSectionText.start_time = result.end_time ?? 0;
       this.newSectionText.end_time = (result.end_time?? 0) + 60;
+          this.newSectionText.liturgical_text_id = 'new';
 
       // Reload
       this.sectionTexts.push(result);
