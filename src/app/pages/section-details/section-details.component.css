@@ -16,3 +16,10 @@
 .sections-texts {
     list-style-type: upper-roman!important;
 }
+
+.ai-import-link {
+  margin-left: 0.75rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: #790822;
+}

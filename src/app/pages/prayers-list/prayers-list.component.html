@@ -1,5 +1,11 @@
 <div style="margin-bottom: 1rem;">
-  <h2>Rugăciuni</h2>
+  <h2>
+    Rugăciuni
+    <a routerLink="/prayers/import" class="import-link" title="Import Word — rugăciune nouă" style="font-size: 0.85rem; font-weight: normal; margin-left: 0.75rem">
+      <i class="material-icons" style="font-size: 14px; vertical-align: middle">upload_file</i>
+      Import Word
+    </a>
+  </h2>
   <label for="title">Adaugă o rugăciune nouă: </label>
       <input id="title" type="text" [(ngModel)]="newPrayer!.title" placeholder="Titlu rugăciune" />
   <button (click)="addPrayer()">Adaugă</button>

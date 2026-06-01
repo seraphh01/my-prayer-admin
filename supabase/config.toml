@@ -1,0 +1,6 @@
+# Supabase Edge Functions — link once: npx supabase link --project-ref nrapqjwyqvwopwoxevlw
+
+project_id = "nrapqjwyqvwopwoxevlw"
+
+[functions.generate-section-texts]
+verify_jwt = true

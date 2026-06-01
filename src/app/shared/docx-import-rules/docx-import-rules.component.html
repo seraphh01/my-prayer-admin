@@ -1,0 +1,22 @@
+<div class="import-rules">
+  <p class="import-rules-intro">{{ intro }}</p>
+
+  <table class="import-rules-table">
+    <thead>
+      <tr>
+        <th>Stil Word</th>
+        <th>Înseamnă</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of styleRows">
+        <td><strong>{{ row.style }}</strong></td>
+        <td>{{ row.role }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <ul class="import-rules-extra">
+    <li *ngFor="let rule of extraRules">{{ rule }}</li>
+  </ul>
+</div>

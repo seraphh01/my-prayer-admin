@@ -8,15 +8,19 @@ import { LiturgicalTextDetailComponent } from './pages/liturgical-text-detail/li
 import { LiturgicalTextsListComponent } from './pages/liturgical-texts-list/liturgical-texts-list.component';
 import { SectionsListComponent } from './pages/sections-list/sections-list.component';
 import { SectionDetailsComponent } from './pages/section-details/section-details.component';
+import { SectionAiImportComponent } from './pages/section-ai-import/section-ai-import.component';
+import { PrayerImportComponent } from './pages/prayer-import/prayer-import.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'prayers', pathMatch: 'full' },
   { path: 'prayers', component: PrayersListComponent, canActivate: [AuthGuard] },
+  { path: 'prayers/import', component: PrayerImportComponent, canActivate: [AuthGuard] },
   { path: 'prayers/:id', component: PrayerDetailComponent, canActivate: [AuthGuard] },
   { path: 'prayerTypes', component: PrayerTypesListComponent, canActivate: [AuthGuard] },
   { path: 'liturgicalTexts', component: LiturgicalTextsListComponent, canActivate: [AuthGuard] },
   { path: 'liturgicalTexts/:id', component: LiturgicalTextDetailComponent, canActivate: [AuthGuard] },
   { path: 'sections', component: SectionsListComponent, canActivate: [AuthGuard] },
+  { path: 'sections/import', component: SectionAiImportComponent, canActivate: [AuthGuard] },
   { path: 'sections/:id', component: SectionDetailsComponent, canActivate: [AuthGuard] },
   { path: 'login', component: LoginComponent},
 ];

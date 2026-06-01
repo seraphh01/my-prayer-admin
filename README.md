@@ -54,6 +54,27 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Import Word
+
+Reguli comune pentru `/sections/import` și `/prayers/import` (afișate și în aplicație):
+
+| Stil Word | Rol |
+|-----------|-----|
+| Heading 1 | Titlu rugăciune |
+| Subtitle 1 | Subtitlu rugăciune (opțional) |
+| Heading 2 | Titlu secțiune |
+| Subtitle 2 | Subtitlu secțiune (opțional) |
+| Heading 3 | Titlu text liturgic |
+| Paragraf (rânduri) | Câte o frază pe rând |
+| Cursiv / bold | Tip frază (`italicText` / `boldText`) |
+| `<< … >>` | Citat (`quoteText`) |
+
+Textele liturgice nu au subtitlu. Titlurile se editează după încărcarea fișierului, în previzualizare.
+
+- **Secțiune nouă** (`/sections/import`): un document cu H2 (+ H3 + fraze); salvare intermediară per text sau secțiune.
+- **Rugăciune nouă** (`/prayers/import`): H1 + H2 + H3; creează rugăciunea, secțiunile și textele; aceeași salvare intermediară.
+- La același titlu: text existent sau text nou.
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

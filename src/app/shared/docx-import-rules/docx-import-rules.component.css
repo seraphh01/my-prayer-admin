@@ -1,0 +1,45 @@
+.import-rules {
+  margin: 0 0 1rem;
+  max-width: 36rem;
+}
+
+.import-rules-intro {
+  margin: 0 0 0.75rem;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.import-rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.import-rules-table th,
+.import-rules-table td {
+  border: 1px solid #ccc;
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+
+.import-rules-table th {
+  background: #fafafa;
+  color: #790822;
+}
+
+.import-rules-table td strong {
+  color: #790822;
+  font-weight: 600;
+}
+
+.import-rules-extra {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.import-rules-extra li {
+  margin-bottom: 0.25rem;
+}

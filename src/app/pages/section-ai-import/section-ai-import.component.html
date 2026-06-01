@@ -1,0 +1,272 @@
+<div>
+  <h2>
+    <button type="button" (click)="goBack()">
+      <i class="material-icons" style="font-size: 16px" title="Înapoi">arrow_back</i>
+    </button>
+    Import Word — secțiune nouă
+  </h2>
+
+  <p>
+    <a routerLink="/sections">Înapoi la lista de secțiuni</a>
+  </p>
+
+  <app-docx-import-rules />
+
+  <section class="panel">
+    <label class="file-label">
+      Fișier Word (.docx)
+      <input
+        type="file"
+        accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        (change)="onWordFileSelected($event)"
+        [disabled]="parsingDocx || saving"
+      />
+    </label>
+    <p *ngIf="parsingDocx" class="generating-hint">Se citește documentul Word…</p>
+  </section>
+
+  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+
+  <section *ngIf="previewBlocks" class="panel">
+    <h3>Previzualizare</h3>
+
+    <div class="import-header-fields section-summary">
+      <label>
+        Titlu secțiune
+        <input [(ngModel)]="sectionTitle" placeholder="din Word: Heading 2" [disabled]="saving" />
+      </label>
+      <label>
+        Subtitlu secțiune (opțional)
+        <input
+          [(ngModel)]="sectionSubtitle"
+          placeholder="din Word: Subtitle 2"
+          [disabled]="saving"
+        />
+      </label>
+    </div>
+
+    <p *ngIf="previewMeta" class="meta-info">
+      {{ previewBlocks.length }} text(e) liturgic(e), {{ previewMeta.sourceChars | number }} caractere
+      <span *ngIf="savedSectionId" class="saved-badge" title="Secțiunea a fost salvată">
+        <i class="material-icons">check_circle</i> Secțiune salvată
+      </span>
+      <span *ngIf="previewMeta.docxWarnings?.length" class="warn">
+        — {{ previewMeta.docxWarnings!.length }} avertisment(e) la conversia Word
+      </span>
+    </p>
+
+    <p class="draft-actions">
+      <button
+        type="button"
+        class="draft-btn"
+        (click)="saveSectionDraft()"
+        [disabled]="saving || parsingDocx || !sectionTitle.trim()"
+      >
+        <i class="material-icons">save</i>
+        {{ savedSectionId ? 'Actualizează secțiunea' : 'Salvează secțiunea' }}
+      </button>
+    </p>
+
+    <div
+      *ngFor="let block of previewBlocks; let bi = index"
+      class="block-card"
+      [class.existing-block]="block.sourceChoice === 'existing'"
+      [class.duplicate-pending]="block.titleMatch && block.sourceChoice !== 'existing'"
+    >
+      <div class="block-top-row">
+        <span class="block-order" title="Ordinea în secțiune">{{ bi + 1 }}</span>
+        <div class="block-toolbar">
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="moveBlockUp(bi)"
+            [disabled]="bi === 0"
+            title="Mută sus"
+          >
+            <i class="material-icons">arrow_upward</i>
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="moveBlockDown(bi)"
+            [disabled]="bi === previewBlocks.length - 1"
+            title="Mută jos"
+          >
+            <i class="material-icons">arrow_downward</i>
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="openReplacePicker(bi)"
+            title="Înlocuiește cu un text existent"
+          >
+            <i class="material-icons">swap_horiz</i>
+          </button>
+          <button
+            type="button"
+            class="icon-btn"
+            (click)="saveBlockDraft(block)"
+            [disabled]="block.savingBlock || block.sourceChoice === 'existing'"
+            [title]="block.savedLiturgicalTextId ? 'Text deja salvat — salvează din nou după editare' : 'Salvează textul'"
+          >
+            <i class="material-icons">{{ block.savedLiturgicalTextId ? 'check_circle' : 'save' }}</i>
+          </button>
+          <button type="button" class="icon-btn icon-btn-danger" (click)="removeBlock(bi)" title="Șterge bloc">
+            <i class="material-icons">delete</i>
+          </button>
+        </div>
+      </div>
+
+      <div class="block-header">
+        <label>
+          Titlu text
+          <input [(ngModel)]="block.title" (ngModelChange)="onBlockTitleChange(block)" />
+        </label>
+        <span *ngIf="block.savedLiturgicalTextId" class="saved-badge" title="Textul a fost salvat">
+          <i class="material-icons">check_circle</i> Salvat
+        </span>
+        <span *ngIf="block.sectionTextPersisted" class="saved-badge section-linked" title="Legat la secțiune">
+          <i class="material-icons">link</i> În secțiune
+        </span>
+        <span *ngIf="block.sourceChoice === 'existing'" class="existing-badge">
+          Se folosește un text existent
+        </span>
+        <label class="repetition">
+          Repetiții
+          <input type="number" min="1" [(ngModel)]="block.repetition" />
+        </label>
+      </div>
+
+      <div *ngIf="block.titleMatch" class="duplicate-notice">
+        <p class="duplicate-notice-title">
+          <i class="material-icons" aria-hidden="true">warning</i>
+          Există deja un text cu același titlu
+        </p>
+        <p class="duplicate-notice-text">
+          Există
+          <strong>{{ block.matchedExistingTexts?.length ?? 1 }}</strong>
+          text(e) cu titlul „<strong>{{ block.title }}</strong>”.
+          Confirmați dacă folosiți textul existent sau adăugați textul importat ca text nou.
+        </p>
+
+        <label *ngIf="(block.matchedExistingTexts?.length ?? 0) > 1" class="duplicate-select">
+          Text existent (același titlu)
+          <select
+            [(ngModel)]="block.existingLiturgicalTextId"
+            (ngModelChange)="onMatchedExistingIdChange(block)"
+          >
+            <option *ngFor="let m of block.matchedExistingTexts" [value]="m.id">{{ m.title }}</option>
+          </select>
+        </label>
+
+        <div class="duplicate-actions">
+          <button
+            type="button"
+            class="duplicate-btn duplicate-btn-confirm"
+            [class.duplicate-btn-active]="block.sourceChoice === 'existing'"
+            (click)="confirmUseExisting(block)"
+          >
+            Folosește textul existent
+          </button>
+          <button
+            type="button"
+            class="duplicate-btn duplicate-btn-deny"
+            [class.duplicate-btn-active]="block.sourceChoice === 'parsed'"
+            (click)="confirmUseParsed(block)"
+          >
+            Adaugă ca text nou
+          </button>
+        </div>
+        <p *ngIf="block.sourceChoice === 'parsed'" class="parsed-hint">
+          Se vor salva frazele importate de mai jos (puteți edita înainte de salvare).
+        </p>
+      </div>
+
+      <p *ngIf="block.sourceChoice === 'existing'" class="existing-hint">
+        Frazele de mai jos sunt doar pentru previzualizare; la salvare se folosește textul existent.
+      </p>
+
+      <ul class="phrases" [class.readonly-phrases]="block.sourceChoice === 'existing'">
+        <li *ngFor="let phrase of block.phrases; let pi = index" class="phrase-item">
+          <span class="phrase-num" title="Fraza {{ pi + 1 }}">{{ pi + 1 }}</span>
+          <textarea
+            [(ngModel)]="phrase.text"
+            class="phrase-text"
+            rows="3"
+            [readonly]="block.sourceChoice === 'existing'"
+          ></textarea>
+          <div class="phrase-controls">
+            <select [(ngModel)]="phrase.type" [disabled]="block.sourceChoice === 'existing'">
+              <option *ngFor="let t of textTypes" [value]="t">{{ t }}</option>
+            </select>
+            <label class="highlight">
+              <input
+                type="checkbox"
+                [(ngModel)]="phrase.highlight"
+                [disabled]="block.sourceChoice === 'existing'"
+              />
+              Evidențiere
+            </label>
+            <button
+              type="button"
+              class="phrase-delete-btn"
+              (click)="removePhrase(bi, pi)"
+              [disabled]="block.sourceChoice === 'existing'"
+              title="Șterge fraza"
+            >
+              <i class="material-icons">delete</i>
+            </button>
+          </div>
+        </li>
+      </ul>
+      <button type="button" (click)="addPhrase(bi)" [disabled]="block.sourceChoice === 'existing'">
+        + Frază
+      </button>
+
+      <p class="insert-block-row">
+        <button type="button" class="insert-block-btn" (click)="addBlock(bi)">+ Text nou aici</button>
+      </p>
+    </div>
+
+    <button type="button" class="save-btn" (click)="save()" [disabled]="saving || parsingDocx">
+      {{ saving ? 'Se salvează...' : 'Creează secțiunea' }}
+    </button>
+  </section>
+
+  <div *ngIf="pickerOpen" class="picker-overlay" (click)="closeReplacePicker()">
+    <div class="picker-dialog" (click)="$event.stopPropagation()">
+      <h4>Alege un text liturgic existent</h4>
+      <p *ngIf="pickerBlockIndex !== null" class="picker-subtitle">
+        Înlocuiește blocul {{ pickerBlockIndex + 1
+        }}<span *ngIf="previewBlocks"> — „{{ previewBlocks[pickerBlockIndex].title }}”</span>
+      </p>
+
+      <label class="picker-search">
+        Caută după titlu
+        <input
+          [(ngModel)]="pickerFilter"
+          (ngModelChange)="applyPickerFilter()"
+          type="search"
+          placeholder="ex: Tropar"
+          autofocus
+        />
+      </label>
+
+      <p *ngIf="loadingDbTexts" class="generating-hint">Se încarcă lista de texte…</p>
+      <p *ngIf="replacingBlock" class="generating-hint">Se încarcă textul selectat…</p>
+
+      <ul *ngIf="!loadingDbTexts" class="picker-list">
+        <li *ngFor="let lt of filteredPickerTexts">
+          <button type="button" (click)="selectExistingText(lt.id)" [disabled]="replacingBlock">
+            {{ lt.title }}
+          </button>
+        </li>
+        <li *ngIf="filteredPickerTexts.length === 0" class="picker-empty">Niciun text găsit.</li>
+      </ul>
+
+      <div class="picker-actions">
+        <button type="button" (click)="closeReplacePicker()">Anulează</button>
+      </div>
+    </div>
+  </div>
+</div>
