@@ -38,7 +38,7 @@
 
       <h3>Secțiuni</h3>
       <p *ngIf="!prayer?.sections?.length">Nu sunt secțiuni adăugate</p>
-      <ul>
+      <ol>
         <li *ngFor="let prayerSection of prayer?.sections; let i = index">
           <p>
             <a [routerLink]="['/sections', prayerSection.section?.id]">{{ prayerSection.section?.title }} {{ prayerSection.section?.subtitle?.length ? '- ' + prayerSection.section?.subtitle : ''}}</a>
@@ -74,7 +74,7 @@
             </li>
           </ul>
         </li>
-      </ul>
+      </ol>
 </div>
       <hr>
       <div>
