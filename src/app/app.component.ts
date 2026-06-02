@@ -15,6 +15,7 @@ import { AuthService } from './core/services/auth.service';
       <a routerLink="/prayerTypes">Tipuri de Rugăciuni</a>
       <a routerLink="/sections">Secțiuni</a>
       <a routerLink="/liturgicalTexts">Texte</a>
+      <a routerLink="/prayers/date-groups">Grupe de dată</a>
       <div style="display: flex; float:right; width: min-content; gap: 1rem">
         <span >{{auth.user?.email}}</span>
         <button (click)="onLogout()">Delogare</button>

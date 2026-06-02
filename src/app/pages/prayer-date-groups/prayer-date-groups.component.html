@@ -1,0 +1,146 @@
+<div class="page">
+  <h2>Grupe de data pentru rugaciuni</h2>
+  <p class="hint">Pagina gestioneaza grupele disponibile. Asocierea la rugaciuni se face separat.</p>
+  <p><a routerLink="/prayers">Inapoi la rugaciuni</a></p>
+
+  <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+  <p *ngIf="loading" class="loading">Se incarca...</p>
+
+  <section class="panel">
+    <h3>Tipuri de grupa de data</h3>
+    <div class="type-create-row">
+      <input [(ngModel)]="newTypeName" placeholder="Nume tip nou" />
+      <button (click)="createType()" [disabled]="saving">Adauga tip</button>
+    </div>
+    <ul class="type-list" *ngIf="dateGroupTypes.length > 0">
+      <li *ngFor="let t of dateGroupTypes">
+        <ng-container *ngIf="editingTypeId === t.id; else viewType">
+          <input [(ngModel)]="editTypeName" />
+          <button (click)="saveEditType(t)" [disabled]="saving">Salveaza</button>
+          <button (click)="cancelEditType()" [disabled]="saving">Anuleaza</button>
+        </ng-container>
+        <ng-template #viewType>
+          <span>{{ t.name }}</span>
+          <button (click)="startEditType(t)" [disabled]="saving">Editeaza</button>
+          <button (click)="deleteType(t)" [disabled]="saving">Sterge</button>
+        </ng-template>
+      </li>
+    </ul>
+    <p *ngIf="!loading && dateGroupTypes.length === 0">Nu exista tipuri.</p>
+  </section>
+
+  <section class="panel">
+    <h3>Adauga grupa noua</h3>
+    <div class="form-grid">
+      <label>Tip
+        <select [(ngModel)]="newGroup.date_group_type_id">
+          <option [ngValue]="null">-- Alege --</option>
+          <option *ngFor="let t of dateGroupTypes" [ngValue]="t.id">{{ t.name }}</option>
+        </select>
+      </label>
+      <label>Titlu
+        <input [(ngModel)]="newGroup.title" placeholder="ex: Duminica" />
+      </label>
+      <label>Data fixa
+        <input type="date" [(ngModel)]="newGroup.specific_date" />
+      </label>
+      <label>Zi saptamana
+        <select [(ngModel)]="newGroup.day_of_week">
+          <option [ngValue]="null">-- Alege --</option>
+          <option *ngFor="let d of weekdayOptions" [ngValue]="d.value">{{ d.value }} - {{ d.label }}</option>
+        </select>
+      </label>
+      <label>Luna (1-12)
+        <input type="number" min="1" max="12" [(ngModel)]="newGroup.month" />
+      </label>
+      <label>Zi (1-31)
+        <input type="number" min="1" max="31" [(ngModel)]="newGroup.day" />
+      </label>
+      <label>Ora (HH:mm)
+        <input type="time" [(ngModel)]="newTime" step="60" />
+      </label>
+    </div>
+    <button (click)="createGroup()" [disabled]="saving">Adauga grupa</button>
+  </section>
+
+  <section class="panel">
+    <h3>Grupe existente</h3>
+    <table *ngIf="dateGroups.length > 0" class="groups-table">
+      <thead>
+        <tr>
+          <th>Tip</th>
+          <th>Titlu</th>
+          <th>Data fixa</th>
+          <th>Zi sapt.</th>
+          <th>Luna</th>
+          <th>Zi</th>
+          <th>Ora</th>
+          <th>Actiuni</th>
+          <th>Asociat la rugaciuni</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let g of dateGroups">
+        <tr>
+          <ng-container *ngIf="editingId === g.id; else viewRow">
+            <td>
+              <select [(ngModel)]="editDraft.date_group_type_id">
+                <option [ngValue]="null">-- Alege --</option>
+                <option *ngFor="let t of dateGroupTypes" [ngValue]="t.id">{{ t.name }}</option>
+              </select>
+            </td>
+            <td><input [(ngModel)]="editDraft.title" /></td>
+            <td><input type="date" [(ngModel)]="editDraft.specific_date" /></td>
+            <td>
+              <select [(ngModel)]="editDraft.day_of_week">
+                <option [ngValue]="null">-- Alege --</option>
+                <option *ngFor="let d of weekdayOptions" [ngValue]="d.value">{{ d.value }} - {{ d.label }}</option>
+              </select>
+            </td>
+            <td><input type="number" min="1" max="12" [(ngModel)]="editDraft.month" /></td>
+            <td><input type="number" min="1" max="31" [(ngModel)]="editDraft.day" /></td>
+            <td><input type="time" [(ngModel)]="editTime" step="60" /></td>
+            <td class="actions">
+              <button (click)="saveEdit(g)" [disabled]="saving">Salveaza</button>
+              <button (click)="cancelEdit()" [disabled]="saving">Anuleaza</button>
+            </td>
+          </ng-container>
+          <ng-template #viewRow>
+            <td>{{ g.date_group_type?.name || '-' }}</td>
+            <td>{{ g.title || '-' }}</td>
+            <td>{{ g.specific_date || '-' }}</td>
+            <td>{{ dayOfWeekLabel(g.day_of_week) }}</td>
+            <td>{{ g.month ?? '-' }}</td>
+            <td>{{ g.day ?? '-' }}</td>
+            <td>{{ hourToTime(g.hour) || '-' }}</td>
+            <td class="actions">
+              <button (click)="startEdit(g)" [disabled]="saving">Editeaza</button>
+
+              <button (click)="deleteGroup(g)" [disabled]="saving">Sterge</button>
+            </td>
+            <td>
+              <button (click)="toggleGroupUsage(g)" [disabled]="saving || usageLoadingByGroupId[g.id]">
+                {{ expandedUsageByGroupId[g.id] ? 'Ascunde' : 'Vezi' }}
+              </button>
+            </td>
+          </ng-template>
+        </tr>
+        <tr *ngIf="expandedUsageByGroupId[g.id]">
+          <td colspan="8" class="usage-cell">
+            <p *ngIf="usageLoadingByGroupId[g.id]" class="loading">Se incarca rugaciunile...</p>
+            <ul *ngIf="!usageLoadingByGroupId[g.id] && (usageByGroupId[g.id]?.length ?? 0) > 0" class="usage-list">
+              <li *ngFor="let p of usageByGroupId[g.id]">
+                <a [routerLink]="['/prayers', p.id]">{{ p.title }}{{ p.subtitle ? ' - ' + p.subtitle : '' }}</a>
+              </li>
+            </ul>
+            <p *ngIf="!usageLoadingByGroupId[g.id] && (usageByGroupId[g.id]?.length ?? 0) === 0">
+              Acest date group nu este folosit in nicio rugaciune.
+            </p>
+          </td>
+        </tr>
+        </ng-container>
+      </tbody>
+    </table>
+    <p *ngIf="!loading && dateGroups.length === 0">Nu exista grupe de data.</p>
+  </section>
+</div>

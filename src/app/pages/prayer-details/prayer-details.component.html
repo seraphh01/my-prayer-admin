@@ -94,6 +94,9 @@
 <div>
     <div>
       <h3>Grupe de dată</h3>
+      <p>
+        <a routerLink="/prayers/date-groups">Gestionează grupele de dată disponibile</a>
+      </p>
       <p *ngIf="!prayer?.date_groups?.length">Nu sunt grupe de dată adăugate</p>
       <ul>
         <li *ngFor="let prayerDateGroup of prayer?.date_groups; let i = index">

@@ -10,11 +10,13 @@ import { SectionsListComponent } from './pages/sections-list/sections-list.compo
 import { SectionDetailsComponent } from './pages/section-details/section-details.component';
 import { SectionAiImportComponent } from './pages/section-ai-import/section-ai-import.component';
 import { PrayerImportComponent } from './pages/prayer-import/prayer-import.component';
+import { PrayerDateGroupsComponent } from './pages/prayer-date-groups/prayer-date-groups.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'prayers', pathMatch: 'full' },
   { path: 'prayers', component: PrayersListComponent, canActivate: [AuthGuard] },
   { path: 'prayers/import', component: PrayerImportComponent, canActivate: [AuthGuard] },
+  { path: 'prayers/date-groups', component: PrayerDateGroupsComponent, canActivate: [AuthGuard] },
   { path: 'prayers/:id', component: PrayerDetailComponent, canActivate: [AuthGuard] },
   { path: 'prayerTypes', component: PrayerTypesListComponent, canActivate: [AuthGuard] },
   { path: 'liturgicalTexts', component: LiturgicalTextsListComponent, canActivate: [AuthGuard] },

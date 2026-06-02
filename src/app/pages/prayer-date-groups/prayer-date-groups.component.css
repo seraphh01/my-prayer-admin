@@ -1,0 +1,96 @@
+.page {
+  margin-bottom: 1rem;
+}
+
+.hint {
+  color: #555;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.panel {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  max-width: 72rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.type-create-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  max-width: 32rem;
+}
+
+.type-create-row input {
+  flex: 1;
+}
+
+.type-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.type-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.groups-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.groups-table th,
+.groups-table td {
+  border: 1px solid #ddd;
+  padding: 0.35rem 0.5rem;
+  vertical-align: top;
+}
+
+.groups-table th {
+  background: #f8f8f8;
+}
+
+.groups-table input,
+.groups-table select {
+  width: 100%;
+  margin: 0;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.actions button {
+  margin-right: 0.35rem;
+}
+
+.error {
+  color: #a00;
+}
+
+.loading {
+  color: #666;
+  font-style: italic;
+}
+
+.usage-cell {
+  background: #fafafa;
+}
+
+.usage-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
