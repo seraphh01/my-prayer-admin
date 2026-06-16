@@ -7,6 +7,21 @@ import { LiturgicalText } from '../../core/models/liturgical-text.model';
 import { TextElement, TextElementType } from '../../core/models/text-element.model';
 import { LiturgicalTextsService } from '../../core/services/liturgical-text.service';
 import { TextElementsService } from '../../core/services/text-element.service';
+import {
+  LiturgicalTextSectionSyncOption,
+  LiturgicalTextSectionSyncService,
+} from '../../core/services/liturgical-text-section-sync.service';
+
+interface TextElementDraft {
+  localKey: string;
+  id?: string;
+  text: string;
+  highlight: boolean;
+  type: string;
+  quote_source: string | null;
+  isNew: boolean;
+  markedForDeletion: boolean;
+}
 
 @Component({
   standalone: true,
@@ -19,60 +34,63 @@ export class LiturgicalTextDetailComponent implements OnInit {
   textId!: string;
   text: LiturgicalText | null = null;
 
-  // Editing the litText title
   editedTitle = '';
 
-  newTextElement: TextElement | null = null;
-  editedTextElement: TextElement | null = null;
-
-  sectionStartTime: number | null = 0;
   textTypes = Object.values(TextElementType);
   textTitle = '';
+
+  textsEditMode = false;
+  textsEditSaving = false;
+  editDraft: TextElementDraft[] = [];
+  private originalDraftById = new Map<string, TextElement>();
+
+  sectionStartTime: number | null = 0;
+
+  sectionSyncModalOpen = false;
+  sectionSyncApplying = false;
+  sectionSyncLoading = false;
+  sectionSyncOnlyNewPhrases = false;
+  sectionSyncAvailable = false;
+  sectionSyncOptions: LiturgicalTextSectionSyncOption[] = [];
+  private pendingSyncTextElementIds: string[] = [];
+  private draftLocalKeyCounter = 0;
 
   constructor(
     private route: ActivatedRoute,
     private litTextService: LiturgicalTextsService,
-    private textElementsService: TextElementsService
+    private textElementsService: TextElementsService,
+    private sectionSyncService: LiturgicalTextSectionSyncService,
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.textId = this.route.snapshot.paramMap.get('id') || '';
     this.sectionStartTime = parseInt(this.route.snapshot.paramMap.get('sectionStartTime') || '0');
-    this.newTextElement = {text_id: this.textId, type: TextElementType.PLAIN} as TextElement;
-    this.editedTextElement = {} as TextElement;
     await this.loadLiturgicalText();
   }
 
-  /**
-   * Loads the LiturgicalText (including the array of text elements if you want).
-   */
   async loadLiturgicalText() {
     this.text = await this.litTextService.getById(this.textId);
     this.textTitle = this.text?.title ?? '';
-}
+    await this.refreshSectionSyncAvailability();
+  }
 
-  /**
-   * Loads text elements separately (sorted by sequence).
-   */
-  async loadTextElements() {
-    if (!this.text) return;
-    const { data, error } = await this.textElementsService.client
-      .from('text_elements')
-      .select('*')
-      .eq('text_id', this.text.id)
-      .order('sequence');
+  private async refreshSectionSyncAvailability() {
+    if (!this.textId) {
+      this.sectionSyncAvailable = false;
+      return;
+    }
 
-    if (!error && data) {
-      // Ensure text has a texts array
-      this.text.texts = data;
+    try {
+      const options = await this.sectionSyncService.findSectionSyncOptions(this.textId);
+      this.sectionSyncAvailable = options.length > 0;
+    } catch (error) {
+      console.error('Error checking section sync availability:', error);
+      this.sectionSyncAvailable = false;
     }
   }
 
-  /**
-   * Update the litText's title in DB.
-   */
   async saveTitle() {
-    if(!this.text) return;
+    if (!this.text) return;
     try {
       const updated = await this.litTextService.update(this.text.id, {
         title: this.text.title ?? null,
@@ -86,34 +104,331 @@ export class LiturgicalTextDetailComponent implements OnInit {
     }
   }
 
-  /**
-   * Add a new text element at the end (sequence = max + 1).
-   */
-  async addTextElement() {
-    if (!this.textId) return;
-    const trimmedText = this.newTextElement?.text.trim();
-    if (!trimmedText) return;
+  startTextsEdit() {
+    const sorted = [...(this.text?.texts ?? [])].sort((a, b) => a.sequence - b.sequence);
+    this.originalDraftById = new Map(sorted.map((te) => [te.id, te]));
+    this.editDraft = sorted.map((te) => this.toDraft(te));
+    if (!this.editDraft.length) {
+      this.editDraft.push(this.createEmptyDraft());
+    }
+    this.textsEditMode = true;
+  }
 
+  cancelTextsEdit() {
+    this.textsEditMode = false;
+    this.editDraft = [];
+    this.originalDraftById.clear();
+  }
+
+  async saveTextsEdit() {
+    if (!this.textId || this.textsEditSaving) return;
+
+    const activeItems = this.editDraft
+      .filter((item) => !item.markedForDeletion)
+      .map((item) => ({ ...item, text: item.text.trim() }))
+      .filter((item) => item.text.length > 0);
+
+    if (!activeItems.length) {
+      if (!confirm('Nu ai niciun text. Vrei să ștergi toate frazele?')) return;
+    }
+
+    this.textsEditSaving = true;
     try {
-      // Find max sequence among existing elements
-      let maxSeq = 0;
-      if (this.text?.texts && this.text.texts.length > 0) {
-        maxSeq = Math.max(...this.text.texts.map((te) => te.sequence));
+      const originals = [...(this.text?.texts ?? [])].sort((a, b) => a.sequence - b.sequence);
+      const originalById = new Map(originals.map((te) => [te.id, te]));
+
+      const idsToDelete = this.editDraft
+        .filter((item) => item.markedForDeletion && item.id && !item.isNew)
+        .map((item) => item.id!);
+      const toCreate: Partial<TextElement>[] = [];
+      const toUpdate: Partial<TextElement>[] = [];
+
+      for (let i = 0; i < activeItems.length; i++) {
+        const item = activeItems[i];
+        const sequence = i + 1;
+        const payload: Partial<TextElement> = {
+          text: item.text,
+          sequence,
+          text_id: this.textId,
+          type: item.type,
+          highlight: item.highlight,
+          quote_source: item.type === TextElementType.QUOTE ? item.quote_source : null,
+        };
+
+        if (item.isNew) {
+          toCreate.push(payload);
+          continue;
+        }
+
+        const original = originalById.get(item.id!);
+        if (!original || this.draftItemChanged(item, original, sequence)) {
+          toUpdate.push({ id: item.id, ...payload });
+        }
       }
 
-      await this.textElementsService.create({
-        text: trimmedText,
-        sequence: maxSeq + 1,
-        text_id: this.textId,
-        type: this.newTextElement?.type ?? TextElementType.PLAIN,
-        highlight: this.newTextElement?.highlight ?? false,
-      });
-      this.newTextElement = {text_id: this.textId, type: TextElementType.PLAIN} as TextElement;
-      // Reload elements from DB so they appear at the end
-      await this.loadTextElements();
-    } catch (error) {
-      console.error('Error adding text element:', error);
+      if (idsToDelete.length) {
+        await this.textElementsService.deleteMany(idsToDelete);
+      }
+
+      const created = toCreate.length ? await this.textElementsService.createMany(toCreate) : [];
+      if (toUpdate.length) {
+        await this.textElementsService.updateMany(toUpdate);
+      }
+
+      const newIds = created.map((row) => row.id);
+      const hasChanges = idsToDelete.length > 0 || toCreate.length > 0 || toUpdate.length > 0;
+
+      this.textsEditMode = false;
+      this.editDraft = [];
+      this.originalDraftById.clear();
+
+      if (hasChanges) {
+        await this.loadLiturgicalText();
+        await this.openSectionSyncModalAfterSave(newIds);
+      }
+    } catch (error: any) {
+      alert('Nu am putut salva textele: ' + (error?.message ?? error));
+    } finally {
+      this.textsEditSaving = false;
     }
+  }
+
+  private draftItemChanged(item: TextElementDraft, original: TextElement, sequence: number): boolean {
+    return (
+      this.draftItemContentChanged(item, original) ||
+      sequence !== original.sequence
+    );
+  }
+
+  private draftItemContentChanged(item: TextElementDraft, original: TextElement): boolean {
+    const quoteSource = item.type === TextElementType.QUOTE ? item.quote_source : null;
+    const originalQuote = original.type === TextElementType.QUOTE ? original.quote_source : null;
+
+    return (
+      item.text !== original.text ||
+      item.type !== original.type ||
+      item.highlight !== original.highlight ||
+      quoteSource !== originalQuote
+    );
+  }
+
+  private draftItemOrderChanged(index: number): boolean {
+    const item = this.editDraft[index];
+    if (!item.id) return false;
+
+    const originalSorted = [...this.originalDraftById.values()].sort((a, b) => a.sequence - b.sequence);
+    const stillActiveOriginalIds = originalSorted
+      .map((te) => te.id)
+      .filter((id) => {
+        const draft = this.editDraft.find((d) => d.id === id);
+        return draft && !draft.markedForDeletion;
+      });
+
+    const currentActiveExistingIds = this.editDraft
+      .filter((d) => !d.markedForDeletion && d.id && !d.isNew)
+      .map((d) => d.id!);
+
+    const currentPos = currentActiveExistingIds.indexOf(item.id);
+    const originalPos = stillActiveOriginalIds.indexOf(item.id);
+
+    return currentPos !== originalPos;
+  }
+
+  insertDraftItemAt(index: number) {
+    this.editDraft.splice(index, 0, this.createEmptyDraft());
+  }
+
+  insertDraftItemAfter(index: number) {
+    this.editDraft.splice(index + 1, 0, this.createEmptyDraft());
+  }
+
+  addDraftItemAtEnd() {
+    this.editDraft.push(this.createEmptyDraft());
+  }
+
+  removeDraftItem(index: number) {
+    const item = this.editDraft[index];
+    if (item.isNew && !item.text.trim()) {
+      this.editDraft.splice(index, 1);
+      return;
+    }
+    item.markedForDeletion = true;
+  }
+
+  restoreDraftItem(index: number) {
+    this.editDraft[index].markedForDeletion = false;
+  }
+
+  moveDraftUp(index: number) {
+    if (index === 0) return;
+    const item = this.editDraft[index];
+    this.editDraft[index] = this.editDraft[index - 1];
+    this.editDraft[index - 1] = item;
+  }
+
+  moveDraftDown(index: number) {
+    if (index >= this.editDraft.length - 1) return;
+    const item = this.editDraft[index];
+    this.editDraft[index] = this.editDraft[index + 1];
+    this.editDraft[index + 1] = item;
+  }
+
+  getDraftDisplayIndex(index: number): number {
+    let displayIndex = 0;
+    for (let i = 0; i <= index; i++) {
+      if (!this.editDraft[i].markedForDeletion) {
+        displayIndex++;
+      }
+    }
+    return displayIndex;
+  }
+
+  isDraftItemNew(item: TextElementDraft): boolean {
+    return item.isNew && !item.markedForDeletion;
+  }
+
+  isDraftItemChanged(index: number): boolean {
+    const item = this.editDraft[index];
+    if (item.markedForDeletion || item.isNew || !item.id) return false;
+
+    const original = this.originalDraftById.get(item.id);
+    if (!original) return false;
+
+    return (
+      this.draftItemContentChanged({ ...item, text: item.text.trim() }, original) ||
+      this.draftItemOrderChanged(index)
+    );
+  }
+
+  isFirstActiveDraftIndex(index: number): boolean {
+    return index === this.editDraft.findIndex((item) => !item.markedForDeletion);
+  }
+
+  isLastActiveDraftIndex(index: number): boolean {
+    if (this.editDraft[index]?.markedForDeletion) return false;
+
+    for (let i = this.editDraft.length - 1; i >= 0; i--) {
+      if (!this.editDraft[i].markedForDeletion) {
+        return i === index;
+      }
+    }
+
+    return false;
+  }
+
+  trackDraftByLocalKey(_index: number, item: TextElementDraft): string {
+    return item.localKey;
+  }
+
+  private toDraft(te: TextElement): TextElementDraft {
+    return {
+      localKey: te.id,
+      id: te.id,
+      text: te.text,
+      highlight: te.highlight,
+      type: te.type,
+      quote_source: te.quote_source,
+      isNew: false,
+      markedForDeletion: false,
+    };
+  }
+
+  private createEmptyDraft(): TextElementDraft {
+    return {
+      localKey: `new-${++this.draftLocalKeyCounter}`,
+      text: '',
+      highlight: false,
+      type: TextElementType.PLAIN,
+      quote_source: null,
+      isNew: true,
+      markedForDeletion: false,
+    };
+  }
+
+  private async openSectionSyncModalAfterSave(newIds: string[]) {
+    await this.loadSectionSyncModal(newIds.length ? newIds : undefined, true);
+  }
+
+  async openSectionSyncModal() {
+    await this.loadSectionSyncModal(undefined, false);
+  }
+
+  private async loadSectionSyncModal(textElementIds: string[] | undefined, onlyIfNeeded: boolean) {
+    this.sectionSyncOnlyNewPhrases = Boolean(textElementIds?.length);
+    this.pendingSyncTextElementIds = textElementIds ?? [];
+    this.sectionSyncLoading = true;
+
+    try {
+      this.sectionSyncOptions = await this.sectionSyncService.findSectionSyncOptions(
+        this.textId,
+        this.pendingSyncTextElementIds.length ? this.pendingSyncTextElementIds : undefined,
+      );
+
+      if (!this.sectionSyncOptions.length) {
+        if (!onlyIfNeeded) {
+          alert('Toate secțiunile care folosesc acest text sunt deja sincronizate.');
+        }
+        this.sectionSyncAvailable = false;
+        return;
+      }
+
+      this.sectionSyncAvailable = true;
+      this.sectionSyncModalOpen = true;
+    } catch (error) {
+      console.error('Error loading section sync options:', error);
+      alert('Nu am putut încărca secțiunile pentru sincronizare.');
+    } finally {
+      this.sectionSyncLoading = false;
+    }
+  }
+
+  selectAllSectionSyncOptions(selected: boolean) {
+    this.sectionSyncOptions.forEach((option) => {
+      option.selected = selected;
+    });
+  }
+
+  get selectedSectionSyncCount(): number {
+    return this.sectionSyncOptions.filter((option) => option.selected).length;
+  }
+
+  closeSectionSyncModal() {
+    this.sectionSyncModalOpen = false;
+    this.sectionSyncOptions = [];
+    this.pendingSyncTextElementIds = [];
+  }
+
+  async applySectionSync() {
+    const selectedIds = this.sectionSyncOptions
+      .filter((option) => option.selected)
+      .map((option) => option.sectionTextId);
+
+    if (!selectedIds.length) {
+      this.closeSectionSyncModal();
+      return;
+    }
+
+    this.sectionSyncApplying = true;
+    try {
+      const insertedCount = await this.sectionSyncService.applyMissingElements(
+        this.textId,
+        selectedIds,
+        this.pendingSyncTextElementIds.length ? this.pendingSyncTextElementIds : undefined,
+      );
+      alert(
+        `${this.sectionSyncOnlyNewPhrases ? 'Frazele noi au fost adăugate' : 'Frazele lipsă au fost adăugate'} în ${selectedIds.length} secțiuni (${insertedCount} legături audio noi).`,
+      );
+      this.closeSectionSyncModal();
+      await this.refreshSectionSyncAvailability();
+    } catch (error: any) {
+      alert('Nu am putut actualiza secțiunile: ' + (error?.message ?? error));
+    } finally {
+      this.sectionSyncApplying = false;
+    }
+  }
+
+  skipSectionSync() {
+    this.closeSectionSyncModal();
   }
 
   goBack() {
@@ -126,105 +441,9 @@ export class LiturgicalTextDetailComponent implements OnInit {
 
     try {
       await this.litTextService.delete(this.text.id);
-      // Redirect to the list page
       location.href = '/liturgicalTexts';
     } catch (error) {
       console.error('Error deleting text:', error);
-    }
-  }
-
-  /**
-   * Delete an existing text element by ID.
-   * index is the position in the array, used to remove it from local state if desired.
-   */
-  async deleteTextElement(id: string, index: number) {
-    if (!confirm('Ești sigur că vrei să ștergi acest text? Nu îl poți recupera ulterior!')) return;
-    try {
-      await this.textElementsService.delete(id);
-      // Remove from local array so the UI updates immediately
-      this.text?.texts?.splice(index, 1);
-} catch (error) {
-      console.error('Error deleting text element:', error);
-    }
-  }
-
-  setEditedTextElement(te: TextElement) {
-    this.editedTextElement = { ...te };
-  }
-
-  clearEditedTextElement() {
-    this.editedTextElement = {} as TextElement;
-  }
-
-  async editTextElement(index: number) {
-    if (!this.editedTextElement?.id || !this.editedTextElement.text) return;
-    try {
-      await this.textElementsService.update(this.editedTextElement.id, { ...this.editedTextElement });
-      // Update local array so the UI updates immediately
-      this.text?.texts?.splice(index, 1, { ...this.editedTextElement });
-      this.editedTextElement = {} as TextElement;
-    } catch (error: any) {
-      alert('A intervenit o eroare: ' + error.message);
-    }
-  }
-
-  /**
-   * Swap sequence with the previous item (move up).
-   */
-  async moveUp(index: number) {
-    if (!this.text?.texts || index === 0) return; // can't move up if first
-    const current = this.text.texts[index];
-    const prev = this.text.texts[index - 1];
-
-    try {
-      // Swap sequences
-      const tempSeq = current.sequence;
-      current.sequence = prev.sequence;
-      prev.sequence = tempSeq;
-
-      // Update both in DB
-      await this.textElementsService.update(current.id, {
-        sequence: current.sequence,
-      });
-      await this.textElementsService.update(prev.id, {
-        sequence: prev.sequence,
-      });
-
-      // Swap them in local array
-      this.text.texts[index] = prev;
-      this.text.texts[index - 1] = current;
-    } catch (error) {
-      console.error('Error moving element up:', error);
-    }
-  }
-
-  /**
-   * Swap sequence with the next item (move down).
-   */
-  async moveDown(index: number) {
-    if (!this.text?.texts || index === this.text.texts.length - 1) return; // can't move down if last
-    const current = this.text.texts[index];
-    const next = this.text.texts[index + 1];
-
-    try {
-      // Swap sequences
-      const tempSeq = current.sequence;
-      current.sequence = next.sequence;
-      next.sequence = tempSeq;
-
-      // Update both in DB
-      await this.textElementsService.update(current.id, {
-        sequence: current.sequence,
-      });
-      await this.textElementsService.update(next.id, {
-        sequence: next.sequence,
-      });
-
-      // Swap them locally
-      this.text.texts[index] = next;
-      this.text.texts[index + 1] = current;
-    } catch (error) {
-      console.error('Error moving element down:', error);
     }
   }
 

@@ -14,5 +14,33 @@ export class SectionsService extends SupabaseTableService<Section> {
     super(supabase);
   }
 
-  // If needed, add custom methods or queries
+  override async getPaginated(
+    page: number,
+    perPage: number,
+    filters: { field: string; operator: string; value: unknown }[],
+  ): Promise<Section[]> {
+    let query = this.client.from(this.tableName).select('*').order('title', { ascending: true });
+
+    for (const filter of filters) {
+      query = query.filter(filter.field, filter.operator, filter.value);
+    }
+
+    const { data, error } = await query.range((page - 1) * perPage, page * perPage - 1);
+
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async countFiltered(filters: { field: string; operator: string; value: unknown }[]): Promise<number> {
+    let query = this.client.from(this.tableName).select('*', { count: 'exact', head: true });
+
+    for (const filter of filters) {
+      query = query.filter(filter.field, filter.operator, filter.value);
+    }
+
+    const { count, error } = await query;
+
+    if (error) throw error;
+    return count ?? 0;
+  }
 }

@@ -5,3 +5,327 @@
 .boldText {
     font-weight: 500;
 }
+
+.texts-header {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.texts-header h3 {
+  margin: 0;
+}
+
+.texts-edit-legend {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.texts-edit-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.15rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.texts-edit-marker--new {
+  color: #1b5e20;
+}
+
+.texts-edit-marker--changed {
+  color: #b8860b;
+}
+
+.texts-edit-index .texts-edit-marker {
+  margin-left: 0.1rem;
+  vertical-align: super;
+}
+
+
+.texts-edit-list {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+.texts-edit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.texts-edit-index {
+  flex-shrink: 0;
+  min-width: 1.25rem;
+  padding-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: right;
+}
+
+.texts-edit-index--omitted {
+  color: rgba(121, 8, 34, 0.25);
+  font-weight: 400;
+}
+
+.texts-edit-insert-lead {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  list-style: none;
+}
+
+.texts-edit-insert-lead-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.2rem;
+}
+
+.texts-edit-insert-lead-btn .material-icons {
+  font-size: 14px;
+}
+
+.texts-edit-item-inner {
+  flex: 1;
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  border-radius: 3px;
+  background: transparent;
+  transition: opacity 0.15s ease;
+}
+
+.texts-edit-item-inner--deleted {
+  opacity: 0.42;
+  filter: grayscale(0.25);
+}
+
+.texts-edit-item-inner--new {
+  border: 1px solid #2e7d32;
+  box-shadow: inset 3px 0 0 #2e7d32;
+}
+
+.texts-edit-item-inner--changed {
+  border: 1px solid #b8860b;
+  box-shadow: inset 3px 0 0 #b8860b;
+}
+
+.texts-edit-item-inner--deleted .texts-edit-textarea,
+.texts-edit-item-inner--deleted .texts-edit-input,
+.texts-edit-item-inner--deleted select {
+  background-color: #e8d4a8;
+}
+
+.texts-edit-textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 2.5em;
+  height: auto;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  resize: vertical;
+  background-color: #ffe5ad;
+  color: #790822;
+}
+
+.texts-edit-textarea.italicText {
+  font-style: italic;
+}
+
+.texts-edit-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.texts-edit-item-options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+}
+
+.texts-edit-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+
+
+.texts-edit-option select,
+.texts-edit-input {
+  font-size: 0.78rem;
+  padding: 0.1rem 0.25rem;
+}
+
+
+
+.texts-edit-item-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.15rem;
+}
+
+.texts-edit-item-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.2rem;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.texts-edit-item-toolbar .material-icons {
+  font-size: 14px;
+}
+
+.add-draft-at-end {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.add-draft-at-end .material-icons {
+  font-size: 16px;
+}
+
+.sync-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.sync-modal-dialog {
+  background: #fff;
+  border-radius: 6px;
+  max-width: 36rem;
+  width: 100%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.sync-modal-dialog h4 {
+  margin: 0 0 0.35rem;
+}
+
+.sync-modal-subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+.sync-modal-toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sync-modal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+}
+
+.sync-modal-list li {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.sync-modal-list li:last-child {
+  border-bottom: none;
+}
+
+.sync-modal-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.sync-modal-section-name {
+  font-weight: 500;
+}
+
+.sync-modal-section-meta {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.sync-modal-phrases {
+  margin: 0.35rem 0 0 1.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.sync-modal-phrase {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.sync-modal-phrase-separator {
+  color: #bbb;
+}
+
+.sync-modal-phrase-existing {
+  color: #999;
+}
+
+.sync-modal-phrase-missing {
+  color: #111;
+  font-weight: 500;
+}
+
+.sync-modal-insert-arrow {
+  margin: 0 0.15rem 0 0.25rem;
+  color: #c9a227;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.sync-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

@@ -7,6 +7,18 @@
       Import Word
     </a>
   </h2>
+
+  <p>
+    <label for="searchSectionTitle">Caută după titlu: </label>
+    <input
+      id="searchSectionTitle"
+      type="text"
+      [(ngModel)]="searchText"
+      (input)="searchByTitle()"
+      placeholder="Caută după titlu"
+    />
+  </p>
+
   <p>
     <label for="newSectionTitle">Adăugați o secțiune nouă: </label>
     <input
@@ -28,5 +40,18 @@
           </a>
       </li>
   </ul>
+
+  <p>
+    <span>Pagina {{ currentPage }}/{{ totalPages }}, Secțiuni per pagină: </span>
+    <select [(ngModel)]="pageSize" (change)="changedPageSize()">
+      <option *ngFor="let size of [10, 15, 25]" [value]="size">{{ size }}</option>
+    </select>
+    <button (click)="previousPage()" [disabled]="currentPage === 1">
+      <i class="material-icons" style="font-size:12px" title="Pagina anterioară">arrow_left</i>
+    </button>
+    <button (click)="nextPage()" [disabled]="currentPage === totalPages">
+      <i class="material-icons" style="font-size:12px" title="Pagina următoare">arrow_right</i>
+    </button>
+  </p>
 </div>
 

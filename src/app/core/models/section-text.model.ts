@@ -22,6 +22,6 @@ export interface SectionText {
     text_element_id: string;
     start_time: number;
     end_time: number;
-    text_element: TextElement;
-    sequence: number;
+    text_element?: TextElement;
+    sequence?: number;
   }

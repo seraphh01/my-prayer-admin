@@ -20,6 +20,14 @@ import { SupabaseService } from '../../core/services/supabase.service';
 import { TextElement, TextElementType } from '../../core/models/text-element.model';
 import { TextElementsService } from '../../core/services/text-element.service';
 
+type SectionTextEditItem = {
+  type: 'linked' | 'missing';
+  textElement: TextElement;
+  sectionTextElement?: SectionTextElement;
+  linkedIndex?: number;
+  hasNextLinked?: boolean;
+};
+
 
 @Component({
   standalone: true,
@@ -48,6 +56,7 @@ export class SectionDetailsComponent implements OnInit {
   newLiturgicalText: LiturgicalText = {} as any;
 
   editingSectionTexts: SectionText[] = [];
+  sectionTextEditItemsById: Record<number, SectionTextEditItem[]> = {};
   currentTime: number = 0;
   uploadedFile: File | null = null;
   floor = Math.floor;
@@ -121,7 +130,10 @@ export class SectionDetailsComponent implements OnInit {
       .order('sequence', { ascending: true, foreignTable: 'section_text_elements' });
 
     if (!error && data) {
-      this.sectionTexts = data;
+      this.sectionTexts = data.map((st) => ({
+        ...st,
+        section_text_elements: this.sortSectionTextElementsByTextSequence(st as SectionText),
+      }));
 
       this.newSectionText!.start_time = this.sectionTexts.length > 0 ? this.sectionTexts[this.sectionTexts.length - 1].end_time : 0;
     }
@@ -286,24 +298,37 @@ export class SectionDetailsComponent implements OnInit {
   editAllSectionTexts() {
     this.editingSectionTexts = JSON.parse(JSON.stringify(this.sectionTexts));
     this.editingSectionTexts.forEach((st) => {
+      if (!st.section_text_elements) {
+        st.section_text_elements = [];
+      }
       st.section_text_elements?.forEach((ste) => {
         ste.start_time = (st?.start_time ?? 0) + ste.start_time;
         ste.end_time = (st?.start_time ?? 0) + ste.end_time;
       });
+      this.refreshSectionTextEditItems(st.id);
     });
   }
 
   cancelAllEditedSectionTexts() {
     this.editingSectionTexts = [];
+    this.sectionTextEditItemsById = {};
   }
 
   addEditingSectionText(st: SectionText) {
+    if (this.isEditingSectionText(st.id)) {
+      return;
+    }
+
     var sectionTextCopy = JSON.parse(JSON.stringify(st)) as SectionText;
+    if (!sectionTextCopy.section_text_elements) {
+      sectionTextCopy.section_text_elements = [];
+    }
     sectionTextCopy.section_text_elements?.forEach((ste) => {
       ste.start_time = (sectionTextCopy?.start_time ?? 0) + ste.start_time;
       ste.end_time = (sectionTextCopy?.start_time ?? 0) + ste.end_time;
     });
     this.editingSectionTexts.push(sectionTextCopy);
+    this.refreshSectionTextEditItems(st.id);
   }
 
   removeEditingSectionText(sectionId: number) {
@@ -311,6 +336,54 @@ export class SectionDetailsComponent implements OnInit {
     if (index >= 0) {
       this.editingSectionTexts.splice(index, 1);
     }
+    delete this.sectionTextEditItemsById[sectionId];
+  }
+
+  trackSectionTextEditItem(_index: number, item: SectionTextEditItem): string {
+    return `${item.type}-${item.textElement.id}`;
+  }
+
+  private refreshSectionTextEditItems(sectionTextId: number): void {
+    if (!this.isEditingSectionText(sectionTextId)) {
+      delete this.sectionTextEditItemsById[sectionTextId];
+      return;
+    }
+
+    this.sectionTextEditItemsById[sectionTextId] = this.buildSectionTextEditItems(sectionTextId);
+  }
+
+  private buildSectionTextEditItems(sectionTextId: number): SectionTextEditItem[] {
+    const editing = this.getEditingSectionText(sectionTextId);
+    const sectionText = this.sectionTexts.find((st) => st.id === sectionTextId);
+    if (!editing || !sectionText) return [];
+
+    const textElements = [...(sectionText.text?.texts ?? [])].sort((a, b) => a.sequence - b.sequence);
+
+    const items = textElements.map((textElement) => {
+      const linkedIndex = editing.section_text_elements?.findIndex(
+        (ste) => ste.text_element_id === textElement.id,
+      );
+
+      if (linkedIndex != null && linkedIndex >= 0) {
+        return {
+          type: 'linked' as const,
+          textElement,
+          linkedIndex,
+          sectionTextElement: editing.section_text_elements![linkedIndex],
+        };
+      }
+
+      return { type: 'missing' as const, textElement };
+    });
+
+    return items.map((item, index) => {
+      if (item.type !== 'linked') return item;
+
+      return {
+        ...item,
+        hasNextLinked: items.slice(index + 1).some((next) => next.type === 'linked'),
+      };
+    });
   }
 
   async saveSingleEditedSectionText(sectionId: number) {
@@ -341,6 +414,7 @@ export class SectionDetailsComponent implements OnInit {
     editedSectionText!.start_time = updatedSectionText.start_time;
     editedSectionText!.end_time = updatedSectionText.end_time;
     
+    delete this.sectionTextEditItemsById[sectionId];
     this.editingSectionTexts.splice(index, 1);
   }
 
@@ -372,6 +446,7 @@ export class SectionDetailsComponent implements OnInit {
       editedSectionText!.end_time = updatedSectionText.end_time;
     }
     this.editingSectionTexts = [];
+    this.sectionTextEditItemsById = {};
   }
 
   /**
@@ -584,6 +659,7 @@ export class SectionDetailsComponent implements OnInit {
     if (!editingSectionText) return;
 
     editingSectionText.section_text_elements?.splice(textElementIndex, 1);
+    this.refreshSectionTextEditItems(sectionTextId);
   }
 
   toggleShowTitle() {
@@ -599,5 +675,131 @@ export class SectionDetailsComponent implements OnInit {
     if (!editingSectionText) return;
 
     editingSectionText.italic = !editingSectionText.italic;
+  }
+
+  /**
+   * Text elements present on the liturgical text but not linked in this section's audio timing.
+   */
+  getMissingTextElements(st: SectionText): TextElement[] {
+    const textElements = [...(st.text?.texts ?? [])].sort((a, b) => a.sequence - b.sequence);
+    const editing = this.getEditingSectionText(st.id);
+    const sectionTextElements = editing?.section_text_elements ?? st.section_text_elements;
+    const linkedIds = new Set(sectionTextElements?.map((ste) => ste.text_element_id) ?? []);
+    return textElements.filter((te) => !linkedIds.has(te.id));
+  }
+
+  hasMissingTextElements(st: SectionText): boolean {
+    return this.getMissingTextElements(st).length > 0;
+  }
+
+  getMissingTextElementsTooltip(st: SectionText): string {
+    const count = this.getMissingTextElements(st).length;
+    if (count === 1) {
+      return '1 frază din text nu este în această secțiune. Apasă pentru a edita.';
+    }
+    return `${count} fraze din text nu sunt în această secțiune. Apasă pentru a edita.`;
+  }
+
+  getSectionTextEditItems(sectionTextId: number): SectionTextEditItem[] {
+    return this.sectionTextEditItemsById[sectionTextId] ?? [];
+  }
+
+  openSectionTextEditForMissing(st: SectionText) {
+    if (!this.isEditingSectionText(st.id)) {
+      this.addEditingSectionText(st);
+    }
+  }
+
+  addMissingTextElementToEditing(sectionTextId: number, textElement: TextElement) {
+    const editing = this.getEditingSectionText(sectionTextId);
+    const sectionText = this.sectionTexts.find((st) => st.id === sectionTextId);
+    if (!editing || !sectionText) return;
+
+    if (editing.section_text_elements?.some((ste) => ste.text_element_id === textElement.id)) {
+      return;
+    }
+
+    const sectionStart = editing.start_time ?? 0;
+    const relativeElements = (editing.section_text_elements ?? []).map((ste) => ({
+      ...ste,
+      start_time: ste.start_time - sectionStart,
+      end_time: ste.end_time - sectionStart,
+    }));
+
+    const { start_time, end_time } = this.defaultTimesForMissingElement(
+      sectionText,
+      textElement,
+      this.sortSectionTextElementsByTextSequence({
+        ...sectionText,
+        section_text_elements: relativeElements,
+      }),
+    );
+
+    const newElement: SectionTextElement = {
+      section_text_id: sectionText.id,
+      text_element_id: textElement.id,
+      start_time: sectionStart + start_time,
+      end_time: sectionStart + end_time,
+      text_element: textElement,
+    };
+
+    const mergedRelative = this.sortSectionTextElementsByTextSequence({
+      ...sectionText,
+      section_text_elements: [
+        ...relativeElements,
+        {
+          ...newElement,
+          start_time,
+          end_time,
+        },
+      ],
+    });
+
+    editing.section_text_elements = mergedRelative.map((ste) => ({
+      ...ste,
+      start_time: sectionStart + ste.start_time,
+      end_time: sectionStart + ste.end_time,
+      text_element:
+        sectionText.text?.texts?.find((te) => te.id === ste.text_element_id) ?? ste.text_element,
+    }));
+
+    this.refreshSectionTextEditItems(sectionTextId);
+  }
+
+  private sortSectionTextElementsByTextSequence(st: SectionText): SectionTextElement[] {
+    const sequenceByTextElementId = new Map(
+      (st.text?.texts ?? []).map((te) => [te.id, te.sequence] as const),
+    );
+    return [...(st.section_text_elements ?? [])].sort(
+      (a, b) =>
+        (sequenceByTextElementId.get(a.text_element_id) ?? 0) -
+        (sequenceByTextElementId.get(b.text_element_id) ?? 0),
+    );
+  }
+
+  private defaultTimesForMissingElement(
+    st: SectionText,
+    textElement: TextElement,
+    existingElements: SectionTextElement[],
+  ): { start_time: number; end_time: number } {
+    const orderedTextElements = [...(st.text?.texts ?? [])].sort((a, b) => a.sequence - b.sequence);
+    const index = orderedTextElements.findIndex((te) => te.id === textElement.id);
+
+    const prevSte =
+      index > 0
+        ? existingElements.find((ste) => ste.text_element_id === orderedTextElements[index - 1].id)
+        : undefined;
+    const nextSte =
+      index < orderedTextElements.length - 1
+        ? existingElements.find((ste) => ste.text_element_id === orderedTextElements[index + 1].id)
+        : undefined;
+
+    let start_time = prevSte?.end_time ?? 0;
+    let end_time = nextSte?.start_time ?? start_time + 60;
+    if (end_time <= start_time) {
+      end_time = start_time + 60;
+    }
+
+    return { start_time, end_time };
   }
 }

@@ -9,16 +9,50 @@ import { TextElement } from '../models/text-element.model';
 })
 export class TextElementsService extends SupabaseTableService<TextElement> {
   protected tableName = 'text_elements';
+  private static readonly BATCH_SIZE = 100;
 
   constructor(protected override supabase: SupabaseService) {
     super(supabase);
   }
 
-  // Example custom method for reordering:
   async updateSequence(id: string, newSequence: number) {
     return this.update(id, { sequence: newSequence });
   }
 
+  async deleteMany(ids: string[]): Promise<void> {
+    for (let i = 0; i < ids.length; i += TextElementsService.BATCH_SIZE) {
+      const batch = ids.slice(i, i + TextElementsService.BATCH_SIZE);
+      const { error } = await this.client.from(this.tableName).delete().in('id', batch);
+      if (error) throw error;
+    }
+  }
 
-  // etc.
+  async createMany(items: Partial<TextElement>[]): Promise<TextElement[]> {
+    const results: TextElement[] = [];
+
+    for (let i = 0; i < items.length; i += TextElementsService.BATCH_SIZE) {
+      const batch = items.slice(i, i + TextElementsService.BATCH_SIZE);
+      const { data, error } = await this.client.from(this.tableName).insert(batch).select();
+      if (error) throw error;
+      if (data) results.push(...data);
+    }
+
+    return results;
+  }
+
+  async updateMany(items: Partial<TextElement>[]): Promise<TextElement[]> {
+    const results: TextElement[] = [];
+
+    for (let i = 0; i < items.length; i += TextElementsService.BATCH_SIZE) {
+      const batch = items.slice(i, i + TextElementsService.BATCH_SIZE);
+      const { data, error } = await this.client
+        .from(this.tableName)
+        .upsert(batch, { onConflict: 'id' })
+        .select();
+      if (error) throw error;
+      if (data) results.push(...data);
+    }
+
+    return results;
+  }
 }

@@ -2,71 +2,200 @@
 <div *ngIf="text">
     <h2>
         <button (click)="goBack()"><i class="material-icons" style="font-size:16px" title="Înapoi">arrow_back</i></button>
-        {{ textTitle }} 
-        <button (click)="deleteText()"><i class="material-icons" style="font-size:16px" title="Șterge">delete</i></button></h2>
+        {{ textTitle }}
+        <button
+          *ngIf="sectionSyncAvailable && !textsEditMode"
+          (click)="openSectionSyncModal()"
+          [disabled]="sectionSyncLoading || sectionSyncApplying"
+          title="Sincronizează frazele lipsă în secțiuni">
+          <i class="material-icons" style="font-size:16px">sync</i>
+        </button>
+        <button (click)="deleteText()" [disabled]="textsEditMode"><i class="material-icons" style="font-size:16px" title="Șterge">delete</i></button></h2>
     <p>
       Schimbă titlul:
-      <input [(ngModel)]="text.title" style="width: fit-content" />
+      <input [(ngModel)]="text.title" style="width: fit-content" [disabled]="textsEditMode" />
       <br>
-      <button (click)="saveTitle()">Salvează</button>
+      <button (click)="saveTitle()" [disabled]="textsEditMode">Salvează</button>
     </p>
 </div>
   
   <hr />
-  <div>
-    <h3>Texte</h3>
-    <p *ngIf="!text?.texts?.length">Nu sunt texte adăugate</p>
-  <ol>
-      <li *ngFor="let elem of text?.texts; let i = index">
-        <p *ngIf="editedTextElement?.id && elem.id == editedTextElement?.id; ">
-          <textarea [(ngModel)]="editedTextElement!.text" rows="4" style="width:100%" ></textarea>
+  <div style="margin: 0 32px;">
+    <div class="texts-header">
+      <h3>Texte</h3>
+      <button
+        *ngIf="!textsEditMode"
+        type="button"
+        (click)="startTextsEdit()"
+        title="Editează textele">
+        <i class="material-icons" style="font-size:16px">edit</i>
+      </button>
+      <button
+        *ngIf="textsEditMode"
+        type="button"
+        (click)="saveTextsEdit()"
+        [disabled]="textsEditSaving"
+        title="Salvează textele">
+        <i class="material-icons" style="font-size:16px">save</i>
+      </button>
+      <button
+        *ngIf="textsEditMode"
+        type="button"
+        (click)="cancelTextsEdit()"
+        [disabled]="textsEditSaving"
+        title="Anulează">
+        <i class="material-icons" style="font-size:16px">close</i>
+      </button>
+    </div>
 
-          <label for="highlight">Evidențiere prima literă: </label>
-          <input [(ngModel)]="editedTextElement!.highlight" id="highlight" type="checkbox" />
-          <label for="type">Tip text: </label>
-          <select [(ngModel)]="editedTextElement!.type">
-            <option *ngFor="let type of textTypes" [value]="type">{{ type }}</option>
-          </select>
-          <span *ngIf="editedTextElement!.type == 'quoteText'">
-            <label for="quote_source">Sursa citat</label>
-            <input [(ngModel)]="editedTextElement!.quote_source" id="quote_source" />
-          </span>
 
-          <button (click)="editTextElement(i)"><i class="material-icons" style="font-size:12px" title="Șterge">save</i></button>
-          <button (click)="clearEditedTextElement()"><i class="material-icons" style="font-size:12px" title="Șterge">cancel</i></button>
-        </p>
-          <p *ngIf="!editedTextElement?.id || elem.id != editedTextElement?.id; ">
 
-            <span *ngIf="elem.type == 'quoteText'"><<</span>
-            <span *ngIf="elem.highlight" class="{{elem.type}}"><b style="font-size: 24px">{{elem.text[0]}}</b>{{elem.text.slice(1)}}</span>
-            <span *ngIf="!elem.highlight" class="{{elem.type}}">{{elem.text}}</span>
-            <span *ngIf="elem.type == 'quoteText'">>> {{elem.quote_source}}</span>
-
-            <span style="display: inline; margin-left: 1rem;">
-              <button (click)="moveUp(i)" [disabled]="i === 0" title="Mută în sus">↑</button>
-              <button (click)="moveDown(i)" [disabled]="i === text?.texts!.length - 1" title="Mută în jos">↓</button>
-              <button (click)="deleteTextElement(elem.id, i)"><i class="material-icons" style="font-size:12px" title="Șterge">delete</i></button>
-              <button (click)="setEditedTextElement(elem)"><i class="material-icons" style="font-size:12px" title="Șterge">edit</i></button>
-            </span>
-  
-        </p>
-  
+    <ol *ngIf="!textsEditMode">
+      <li *ngFor="let elem of text?.texts">
+        <span *ngIf="elem.type == 'quoteText'"><<</span>
+        <span *ngIf="elem.highlight" class="{{elem.type}}"><b style="font-size: 24px">{{elem.text[0]}}</b>{{elem.text.slice(1)}}</span>
+        <span *ngIf="!elem.highlight" class="{{elem.type}}">{{elem.text}}</span>
+        <span *ngIf="elem.type == 'quoteText'">>> {{elem.quote_source}}</span>
       </li>
-  </ol>
+    </ol>
+    <p *ngIf="!textsEditMode && !text?.texts?.length">Nu sunt texte adăugate</p>
+
+    <p *ngIf="textsEditMode" class="texts-edit-legend">
+      <span class="texts-edit-marker texts-edit-marker--new">N</span> frază nouă
+      <span class="texts-edit-marker texts-edit-marker--changed">*</span> modificată
+    </p>
+
+    <ul *ngIf="textsEditMode" class="texts-edit-list">
+      <ng-container *ngFor="let item of editDraft; let i = index; trackBy: trackDraftByLocalKey">
+        <li *ngIf="isFirstActiveDraftIndex(i)" class="texts-edit-insert-lead">
+          <span class="texts-edit-index"></span>
+          <button type="button" class="texts-edit-insert-lead-btn" (click)="insertDraftItemAt(i)" title="Inserează frază la început">
+            <i class="material-icons">add</i>
+          </button>
+        </li>
+
+        <li class="texts-edit-item">
+          <span *ngIf="!item.markedForDeletion" class="texts-edit-index">
+            {{ getDraftDisplayIndex(i) }}.
+            <span *ngIf="isDraftItemNew(item)" class="texts-edit-marker texts-edit-marker--new" title="Frază nouă">N</span>
+            <span *ngIf="isDraftItemChanged(i)" class="texts-edit-marker texts-edit-marker--changed" title="Modificată">*</span>
+          </span>
+          <span *ngIf="item.markedForDeletion" class="texts-edit-index texts-edit-index--omitted" aria-hidden="true">·</span>
+          <div
+            class="texts-edit-item-inner"
+            [class.texts-edit-item-inner--deleted]="item.markedForDeletion"
+            [class.texts-edit-item-inner--new]="isDraftItemNew(item)"
+            [class.texts-edit-item-inner--changed]="isDraftItemChanged(i)">
+            <textarea
+              [id]="'draftText' + item.localKey"
+              class="texts-edit-textarea"
+              [class.italicText]="item.type === 'italicText'"
+              [(ngModel)]="item.text"
+              [disabled]="item.markedForDeletion"
+              rows="3"></textarea>
+
+            <div class="texts-edit-footer">
+              <div class="texts-edit-item-options">
+                <label [for]="'draftHighlight' + item.localKey" class="texts-edit-option">
+                  <input [(ngModel)]="item.highlight" [id]="'draftHighlight' + item.localKey" type="checkbox" [disabled]="item.markedForDeletion" />
+                  Evidentiere prima literă
+                </label>
+                <label [for]="'draftType' + item.localKey" class="texts-edit-option">
+                  Tip
+                  <select [(ngModel)]="item.type" [id]="'draftType' + item.localKey" [disabled]="item.markedForDeletion">
+                    <option *ngFor="let type of textTypes" [value]="type">{{ type }}</option>
+                  </select>
+                </label>
+                <label *ngIf="item.type == 'quoteText'" [for]="'draftQuote' + item.localKey" class="texts-edit-option texts-edit-option-grow">
+                  Sursă
+                  <input [(ngModel)]="item.quote_source" [id]="'draftQuote' + item.localKey" class="texts-edit-input" [disabled]="item.markedForDeletion" />
+                </label>
+                <div class="texts-edit-item-toolbar">
+                  <ng-container *ngIf="!item.markedForDeletion">
+                    <button
+                      *ngIf="!isLastActiveDraftIndex(i)"
+                      type="button"
+                      (click)="insertDraftItemAfter(i)"
+                      title="Inserează după">
+                      <i class="material-icons">add</i>
+                    </button>
+                    <button type="button" (click)="moveDraftUp(i)" [disabled]="i === 0" title="Sus">↑</button>
+                    <button type="button" (click)="moveDraftDown(i)" [disabled]="i === editDraft.length - 1" title="Jos">↓</button>
+                    <button type="button" (click)="removeDraftItem(i)" title="Șterge">
+                      <i class="material-icons">delete</i>
+                    </button>
+                  </ng-container>
+                  <button *ngIf="item.markedForDeletion" type="button" (click)="restoreDraftItem(i)" title="Restaurează">
+                    <i class="material-icons">restore</i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </li>
+      </ng-container>
+    </ul>
+
+    <button
+      *ngIf="textsEditMode"
+      type="button"
+      class="add-draft-at-end"
+      (click)="addDraftItemAtEnd()">
+      <i class="material-icons">add</i>
+      Adaugă la final
+    </button>
   </div>
-  
-  
-  <div style="margin-top:1rem;">
-    <h4>Adaugă un text nou</h4>
-    <label for="text">Text:</label>
-    <textarea id="text" [(ngModel)]="newTextElement!.text" rows="4" style="width:100%" ></textarea>
-    <label for="highlight">Evidențiere prima literă: </label>
-    <input [(ngModel)]="newTextElement!.highlight" id="highlight" type="checkbox" />
-    <label for="type">Tip text: </label>
-    <select [(ngModel)]="newTextElement!.type">
-      <option *ngFor="let type of textTypes" [value]="type">{{ type }}</option>
-    </select>
-    <br />
-    <button (click)="addTextElement()">Adaugă</button>
+
+  <div *ngIf="sectionSyncModalOpen" class="sync-modal-overlay" (click)="skipSectionSync()">
+    <div class="sync-modal-dialog" (click)="$event.stopPropagation()">
+      <h4>Text folosit în secțiuni</h4>
+      <p *ngIf="sectionSyncOnlyNewPhrases" class="sync-modal-subtitle">
+        Ai adăugat frază/fraze noi. Acest text este folosit în secțiuni care nu le au încă legate de audio.
+        Selectează secțiunile care ar trebui să primească frazele noi.
+      </p>
+      <p *ngIf="!sectionSyncOnlyNewPhrases" class="sync-modal-subtitle">
+        Acest text este folosit în secțiuni cu fraze care nu sunt legate de audio.
+        Selectează secțiunile care ar trebui sincronizate.
+      </p>
+
+      <div class="sync-modal-toolbar">
+        <button type="button" (click)="selectAllSectionSyncOptions(true)">Selectează toate</button>
+        <button type="button" (click)="selectAllSectionSyncOptions(false)">Deselectează toate</button>
+      </div>
+
+      <ul class="sync-modal-list">
+        <li *ngFor="let option of sectionSyncOptions">
+          <label>
+            <input type="checkbox" [(ngModel)]="option.selected" />
+            <span class="sync-modal-section-name">{{ option.sectionLabel }}</span>
+            <span class="sync-modal-section-meta">
+              {{ option.missingCount === 1 ? '1 frază lipsă' : option.missingCount + ' fraze lipsă' }}
+            </span>
+          </label>
+          <p class="sync-modal-phrases">
+            <ng-container *ngFor="let phrase of option.phrasePreview">
+              <p
+              class="sync-modal-phrase"
+                [class.sync-modal-phrase-existing]="!phrase.isMissing"
+                [class.sync-modal-phrase-missing]="phrase.isMissing">
+                <span>{{ phrase.displayIndex }}.</span> {{ phrase.text }} <span *ngIf="phrase.isMissing" class="sync-modal-insert-arrow" title="Va fi inserată aici">◄</span> 
+              </p>
+              
+            </ng-container>
+          </p>
+        </li>
+      </ul>
+
+      <div class="sync-modal-actions">
+        <button type="button" (click)="skipSectionSync()" [disabled]="sectionSyncApplying">Omite</button>
+        <button
+          type="button"
+          (click)="applySectionSync()"
+          [disabled]="sectionSyncApplying || selectedSectionSyncCount === 0">
+          {{ sectionSyncApplying ? 'Se aplică...' : 'Aplică în secțiunile selectate (' + selectedSectionSyncCount + ')' }}
+        </button>
+      </div>
+    </div>
   </div>
   
